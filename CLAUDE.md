@@ -10,22 +10,38 @@ Si un paso no verifica, no avances. Arréglalo ahí.
 
 ## Documentación de referencia
 
-Este archivo es solo el plan de ejecución. **El resto del contexto del proyecto —y las bases para construir el frontend— está en `HackMTY-2026/docs/`, en PDF.** Antes de escribir código, y sobre todo antes de tocar la Fase 7, hay que leerlos.
+Este archivo es solo el plan de ejecución. **El resto del contexto del proyecto —y las bases para construir el frontend— está en `docs/`.** Antes de escribir código, y sobre todo antes de tocar la Fase 7, hay que leerlos.
 
 | Documento | Qué contiene |
 |---|---|
-| `docs/Investigacion_Forensic_Auditor_HackMTY2026.pdf` | Investigación de fondo: el problema, los tipos de fraude y por qué se atacan así |
-| `docs/Arquitectura_v2_Forensic_Auditor.pdf` | **Arquitectura vigente.** Las secciones 3, 4 y 6 que se citan en los pasos de abajo se refieren a este documento |
-| `docs/Planeacion_v2_Forensic_Auditor.pdf` | **Planeación vigente:** alcance, fases y criterios de corte |
-| `docs/Arquitectura_Forensic_Auditor_HackMTY2026.pdf` | Versión previa de la arquitectura. Solo para consulta histórica |
-| `docs/Planeacion_Forensic_Auditor_HackMTY2026.pdf` | Versión previa de la planeación. Solo para consulta histórica |
+| [`docs/Arquitectura_v2_Forensic_Auditor.md`](docs/Arquitectura_v2_Forensic_Auditor.md) | **Arquitectura vigente.** Las secciones 3, 4 y 6 que se citan en los pasos de abajo se refieren a este documento |
+| [`docs/Planeacion_v2_Forensic_Auditor.md`](docs/Planeacion_v2_Forensic_Auditor.md) | **Planeación vigente:** alcance, fases, guion del demo y criterios de corte |
+| [`docs/Investigacion_Forensic_Auditor_HackMTY2026.md`](docs/Investigacion_Forensic_Auditor_HackMTY2026.md) | Investigación de fondo: el problema, el artículo 69-B, los tipos de fraude y el glosario. Sigue vigente completa |
+| [`docs/Arquitectura_Forensic_Auditor_HackMTY2026.md`](docs/Arquitectura_Forensic_Auditor_HackMTY2026.md) | Arquitectura v1. Superada en el contrato de datos, pero **sigue siendo la única fuente de varios temas** (ver abajo) |
+| [`docs/Planeacion_Forensic_Auditor_HackMTY2026.md`](docs/Planeacion_Forensic_Auditor_HackMTY2026.md) | Planeación v1. Igual: superada en alcance, pero **única fuente del guion del demo y de las reglas de equipo** |
 
-Cuando la v2 y la v1 se contradigan, manda la v2.
+### Cómo se leen juntas
+
+**La v2 manda donde ambas hablan del mismo tema. La v1 sigue valiendo donde la v2 no dice nada.** Las v2 se escribieron como un delta sobre el material oficial de los organizadores, no como un reemplazo completo: dan por hecho lo que ya estaba decidido y no lo repiten.
+
+Lo que **solo existe en la v1** y sigue aplicando:
+
+| Tema | Dónde | Por qué importa |
+|---|---|---|
+| La secuencia del grafo, paso 1 a 6 | Arquitectura v1 §5 | Es la coreografía del grafo progresivo. La v2 pide «grafo progresivo» pero no dice cómo |
+| Restricciones de la visualización | Arquitectura v1 §5 | Posiciones fijas, sin zoom, máx. 12-15 nodos, sin partículas. Reglas duras para el frontend |
+| El campo `paso` para animar sin streaming | Arquitectura v1 §5 | Decide la arquitectura del frontend: recibe todo y revela con retardo, en vez de abrir un canal en vivo |
+| El guion literal del pitch, 0:00 a 3:00 | Planeación v1 §2 | La v2 solo trae la tabla de los dos carriles; el texto a decir está aquí |
+| El plan B y su umbral de 90 segundos | Planeación v1 §2 | Cómo se anuncia y cuándo cambia el operador, sin consultar |
+| La pregunta sorpresa del jurado | Planeación v1 §2 | «¿Por qué no acusaste a ese?» y cómo se contesta desde el registro |
+| Presupuesto de latencia y elección de modelo | Arquitectura v1 §4 | Cómo medir y a qué modelo bajarse si no cabe |
+| Variables de entorno, reglas de equipo, sueño | Arquitectura v1 §6, Planeación v1 §4 | Coordinación, ramas, integración temprana |
+
+Lo que la v2 **sí reemplazó** y no debe tomarse de la v1: las 9 tablas en español, PostgreSQL, los tres veredictos (DEFENDIBLE / CORREGIR / ACUSACIÓN), el gate de veredicto, el contrato de salida JSON viejo, AMLSim, y los cuatro estatus del 69-B como diferenciador.
 
 Notas prácticas:
 
-- Son PDFs. Si la herramienta de lectura no los abre, hace falta `poppler-utils` (`pdftoppm`) instalado, o convertirlos a texto antes de leerlos.
-- Junto con estos van los materiales oficiales de los organizadores: `estate_schema.sql`, `submission_schema.json`, `ground_truth_schema.json`, `case_file_structure.md`, `validate_format.py` y `README.md`.
+- Junto con estos van los materiales oficiales de los organizadores: `estate_schema.sql`, `submission_schema.json`, `ground_truth_schema.json`, `case_file_structure.md`, `validate_format.py` y `README.md`. **Todavía no están en el repo.**
 - El diseño descrito en esos documentos está cerrado. No se proponen cambios.
 
 ---
@@ -390,7 +406,7 @@ generate/.
 
 Solo cuando todo lo anterior corra.
 
-Antes de empezar: lee `HackMTY-2026/docs/Arquitectura_v2_Forensic_Auditor.pdf` y `HackMTY-2026/docs/Planeacion_v2_Forensic_Auditor.pdf`. Ahí están las bases de la interfaz —qué muestra, en qué orden y qué se demuestra en vivo—. Lo de abajo es el resumen operativo, no la especificación completa.
+Antes de empezar: lee [`docs/Arquitectura_v2_Forensic_Auditor.md`](docs/Arquitectura_v2_Forensic_Auditor.md) y [`docs/Planeacion_v2_Forensic_Auditor.md`](docs/Planeacion_v2_Forensic_Auditor.md), sobre todo la sección «2 — El demo» de la planeación. Ahí están las bases de la interfaz —qué muestra, en qué orden y qué se demuestra en vivo—. Lo de abajo es el resumen operativo, no la especificación completa.
 
 
 Crea frontend/ con Vite + React:
@@ -419,7 +435,7 @@ Cortes ya decididos. No se discuten en el momento.
 
 *Nunca se corta:* el retador, el validador, los leads con razón específica, la reconciliación de pesos, y los tres números.
 
-(Alineado a `docs/Planeacion_v2_Forensic_Auditor.pdf`, sección "Checkpoints" y "Cortes decididos por adelantado" — la versión que manda.)
+(Alineado a [`docs/Planeacion_v2_Forensic_Auditor.md`](docs/Planeacion_v2_Forensic_Auditor.md), secciones «Checkpoints» y «Cortes decididos por adelantado» — la versión que manda.)
 
 ---
 
