@@ -3,26 +3,37 @@ Generador determinista del data estate de The Forensic Auditor.
 
     python3 src/generate/estate.py --seed 1 --out out/
     -> out/estate_seed001.db
+    -> out/truth_seed001.json
 
 Todo lo aleatorio pasa por UNA instancia random.Random(seed), pasada como
 parametro a cada helper. Nada de random global, nada de datetime.now(),
 nada de uuid4 sin semilla -- el mismo seed debe reproducir exactamente
 el mismo archivo (mismo md5).
 
-Este paso (2.1) solo siembra las 8 tablas oficiales con operacion limpia
-y coherente entre si: una empresa investigada, sus proveedores y
-empleados, facturas con su asiento contable y su pago, ordenes de compra,
-contratos, y una lista 69-B con algunos RFC en definitivo/presunto.
-Todavia SIN ningun esquema de fraude -- eso se siembra en un paso
-posterior que construye sobre este generador.
+Primero siembra las 8 tablas oficiales con operacion limpia y coherente
+entre si (empresa investigada, proveedores, empleados, facturas con su
+asiento contable y su pago, ordenes de compra, contratos, 69-B). Despues
+llama a schemes.plant_all() para sembrar, sobre esos mismos datos, un
+numero de esquemas de fraude y decoys que decide ctx.rng (nunca fijo).
+
+ground_truth (schemes + decoys) se escribe aparte, en
+out/truth_seedNNN.json -- el agente y sus herramientas (tools/, agent/)
+nunca deben importar este archivo ni la palabra "ground_truth". Este
+modulo y schemes.py son, junto con eval/, los unicos lugares donde esa
+palabra puede aparecer.
 """
 import argparse
 import datetime as dt
+import itertools
+import json
 import random
 import re
 import sqlite3
 import string
 from pathlib import Path
+from types import SimpleNamespace
+
+import schemes
 
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
@@ -254,8 +265,11 @@ def build_estate(seed: int, out_dir: Path) -> tuple[Path, dict]:
     vendors, contracts, purchase_orders = [], [], []
     invoices, ledger, bank_txns = [], [], []
 
-    entry_id = 1
-    inv_n = po_n = ctr_n = txn_n = 1
+    entry_seq = itertools.count(1)
+    inv_seq = itertools.count(1)
+    po_seq = itertools.count(1)
+    ctr_seq = itertools.count(1)
+    txn_seq = itertools.count(1)
 
     for _ in range(n_vendors):
         is_moral = rng.random() < 0.85
@@ -274,21 +288,19 @@ def build_estate(seed: int, out_dir: Path) -> tuple[Path, dict]:
             value = round(rng.uniform(100_000, 3_000_000), 2)
             start = _random_date(rng, registered, dt.date(2024, 6, 1))
             contracts.append((
-                f"CTR-{ctr_n:05d}", rfc, start.isoformat(), value,
+                f"CTR-{next(ctr_seq):05d}", rfc, start.isoformat(), value,
                 f"Contrato de {category.lower()}",
             ))
-            ctr_n += 1
 
         n_po = rng.randint(1, 3) if rng.random() < 0.7 else 0
         for _ in range(n_po):
             po_date = _random_date(rng, registered, dt.date(2024, 6, 1))
             purchase_orders.append((
-                f"PO-{po_n:05d}", rfc, po_date.isoformat(),
+                f"PO-{next(po_seq):05d}", rfc, po_date.isoformat(),
                 round(rng.uniform(5_000, 400_000), 2),
                 rng.choice(employee_names), rng.choice(employee_names),
                 f"Orden de compra: {rng.choice(GIRO_CONCEPTOS[category])}",
             ))
-            po_n += 1
 
         for _ in range(rng.randint(1, 6)):
             issue = _random_date(rng, max(registered, dt.date(2024, 1, 1)), dt.date(2024, 12, 31))
@@ -296,8 +308,7 @@ def build_estate(seed: int, out_dir: Path) -> tuple[Path, dict]:
             iva = round(subtotal * 0.16, 2)
             total = round(subtotal + iva, 2)
             status = "vigente" if rng.random() < 0.95 else "cancelado"
-            uuid_ = f"INV-{inv_n:05d}"
-            inv_n += 1
+            uuid_ = f"INV-{next(inv_seq):05d}"
 
             invoices.append((
                 uuid_, rfc, company_rfc, issue.isoformat(), subtotal, iva, total,
@@ -311,29 +322,43 @@ def build_estate(seed: int, out_dir: Path) -> tuple[Path, dict]:
             approver = rng.choice(employee_names)
             cost_center = rng.choice(COST_CENTERS)
 
-            ledger.append((entry_id, issue.isoformat(), "5000", "Gastos operativos",
+            ledger.append((next(entry_seq), issue.isoformat(), "5000", "Gastos operativos",
                             total, 0.0, f"Registro factura {uuid_}", uuid_, cost_center, approver))
-            entry_id += 1
-            ledger.append((entry_id, issue.isoformat(), "2100", "Cuentas por pagar",
+            ledger.append((next(entry_seq), issue.isoformat(), "2100", "Cuentas por pagar",
                             0.0, total, f"Registro factura {uuid_}", uuid_, cost_center, approver))
-            entry_id += 1
 
             if status == "vigente":
                 pay_date = issue + dt.timedelta(days=rng.randint(3, 45))
-                txn_id = f"BNK-{txn_n:05d}"
-                txn_n += 1
+                txn_id = f"BNK-{next(txn_seq):05d}"
                 bank_txns.append((
                     txn_id, pay_date.isoformat(), company_clabe, clabe, total,
                     f"Pago factura {uuid_}", "SPEI",
                 ))
-                ledger.append((entry_id, pay_date.isoformat(), "2100", "Cuentas por pagar",
+                ledger.append((next(entry_seq), pay_date.isoformat(), "2100", "Cuentas por pagar",
                                 total, 0.0, f"Pago factura {uuid_}", uuid_, cost_center, approver))
-                entry_id += 1
-                ledger.append((entry_id, pay_date.isoformat(), "1100", "Bancos",
+                ledger.append((next(entry_seq), pay_date.isoformat(), "1100", "Bancos",
                                 0.0, total, f"Pago factura {uuid_}", uuid_, cost_center, approver))
-                entry_id += 1
 
     efos_list = _make_efos_list(rng, vendors, used_rfcs)
+
+    ctx = SimpleNamespace(
+        rng=rng, company_rfc=company_rfc, company_clabe=company_clabe,
+        employees=employees, employee_names=employee_names,
+        used_rfcs=used_rfcs, used_clabes=used_clabes,
+        vendors=vendors, invoices=invoices, ledger=ledger, bank_txns=bank_txns,
+        purchase_orders=purchase_orders, contracts=contracts, efos_list=efos_list,
+        inv_seq=inv_seq, txn_seq=txn_seq, po_seq=po_seq, ctr_seq=ctr_seq, entry_seq=entry_seq,
+    )
+    schemes_planted, decoys_planted = schemes.plant_all(ctx)
+
+    ground_truth = {
+        "seed": seed,
+        "company_rfc": company_rfc,
+        "schemes": schemes_planted,
+        "decoys": decoys_planted,
+    }
+    truth_path = out_dir / f"truth_seed{seed:03d}.json"
+    truth_path.write_text(json.dumps(ground_truth, ensure_ascii=False, indent=2), encoding="utf-8")
 
     _write_db(db_path, {
         "vendors": vendors,
@@ -354,6 +379,9 @@ def build_estate(seed: int, out_dir: Path) -> tuple[Path, dict]:
         "n_employees": len(employees),
         "n_invoices": len(invoices),
         "n_efos": len(efos_list),
+        "n_schemes": len(schemes_planted),
+        "n_decoys": len(decoys_planted),
+        "truth_path": truth_path,
     }
     return db_path, stats
 
@@ -401,16 +429,18 @@ def _write_db(db_path: Path, tables: dict) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Genera el data estate (sin fraude sembrado)")
+    parser = argparse.ArgumentParser(description="Genera el data estate con esquemas y decoys")
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
 
     db_path, stats = build_estate(args.seed, args.out)
     print(f"OK -> {db_path}")
+    print(f"     -> {stats['truth_path']}")
     print(f"   empresa investigada: {stats['company_rfc']}")
     print(f"   proveedores: {stats['n_vendors']}  empleados: {stats['n_employees']}  "
           f"facturas: {stats['n_invoices']}  en efos_list: {stats['n_efos']}")
+    print(f"   esquemas sembrados: {stats['n_schemes']}  decoys sembrados: {stats['n_decoys']}")
 
 
 if __name__ == "__main__":
