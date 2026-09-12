@@ -390,8 +390,12 @@ def decoy_contrato_marco(ctx):
     ))
 
     invoice_ids = []
+    # el contrato puede ser viejo (start hereda el rango de registered,
+    # que puede ser 2010+) pero las facturas del periodo bajo auditoria
+    # siempre caen en 2024, igual que el resto del estate.
+    primera_factura = max(start, dt.date(2024, 1, 1)) + dt.timedelta(days=30)
     for i in range(rng.randint(4, 6)):
-        issue = start + dt.timedelta(days=30 * (i + 1))
+        issue = primera_factura + dt.timedelta(days=30 * i)
         if issue > dt.date(2024, 12, 15):
             break
         uuid_ = _add_invoice(ctx, rfc, ctx.company_rfc, cuota, issue,
