@@ -225,7 +225,7 @@ def _address(rng: random.Random) -> str:
     return f"{calle} #{numero}, Col. {colonia}, Monterrey, NL"
 
 
-def _make_employee(rng: random.Random, i: int, used_clabes: set) -> dict:
+def _make_employee(rng: random.Random, i: int, used_clabes: set, role: str = None) -> dict:
     nombre = rng.choice(NOMBRES)
     ap1 = rng.choice(APELLIDOS)
     ap2 = rng.choice(APELLIDOS)
@@ -233,10 +233,55 @@ def _make_employee(rng: random.Random, i: int, used_clabes: set) -> dict:
     return {
         "emp_id": f"EMP:{i:04d}",
         "name": f"{nombre} {ap1} {ap2}".upper(),
-        "role": rng.choice(ROLES),
+        "role": role or rng.choice(ROLES),
         "bank_clabe": gen_clabe(rng, used_clabes),
         "hire_date": hire.isoformat(),
     }
+
+
+# ---------------------------------------------------------------------
+# Escalones de aprobacion. El umbral que "threshold_splitting" evade no
+# es un numero flotando solo: es el techo real del nivel mas bajo, y por
+# eso infer_approval_threshold() (en tools/) lo puede inferir agrupando
+# purchase_orders por approver. Sin aprobadores con techo real, agrupar
+# por approver es puro ruido -- no hay escalon que inferir.
+# ---------------------------------------------------------------------
+APPROVAL_THRESHOLD_CHOICES = [50_000, 100_000, 250_000]
+APPROVER_TIERS = {
+    "coordinador": "Coordinador de Compras",
+    "gerente": "Gerente de Compras",
+    "director": "Director de Compras",
+}
+
+
+def _make_approval_tiers(rng, used_clabes, next_emp_id):
+    """2 o 3 personas por nivel. Regresa (tiers, empleados, siguiente_id)
+    donde tiers = {"coordinador": [nombre, ...], "gerente": [...], ...}."""
+    tiers = {}
+    empleados = []
+    i = next_emp_id
+    for nivel, role in APPROVER_TIERS.items():
+        nombres = []
+        for _ in range(rng.randint(2, 3)):
+            emp = _make_employee(rng, i, used_clabes, role=role)
+            empleados.append(emp)
+            nombres.append(emp["name"])
+            i += 1
+        tiers[nivel] = nombres
+    return tiers, empleados, i
+
+
+def _approver_for_amount(rng, amount, threshold, tiers):
+    """El nivel MAS BAJO cuyo techo cubre el monto firma la orden de
+    compra: coordinador hasta threshold, gerente hasta threshold*5,
+    director sin techo."""
+    if amount <= threshold:
+        nivel = "coordinador"
+    elif amount <= threshold * 5:
+        nivel = "gerente"
+    else:
+        nivel = "director"
+    return rng.choice(tiers[nivel])
 
 
 # ---------------------------------------------------------------------
@@ -256,10 +301,18 @@ def build_estate(seed: int, out_dir: Path) -> tuple[Path, dict]:
     company_rfc = gen_rfc_moral(rng, used_rfcs)
     company_clabe = gen_clabe(rng, used_clabes)
 
+    # El umbral se elige aqui, antes de generar aprobadores u ordenes de
+    # compra: todo el estate (limpio y sembrado) tiene que ser consistente
+    # con el mismo escalon de autoridad.
+    approval_threshold = rng.choice(APPROVAL_THRESHOLD_CHOICES)
+    tiers, tier_employees, next_emp_id = _make_approval_tiers(rng, used_clabes, 1)
+
     n_vendors = rng.randint(*N_VENDORS_RANGE)
     n_employees = rng.randint(*N_EMPLOYEES_RANGE)
 
-    employees = [_make_employee(rng, i, used_clabes) for i in range(1, n_employees + 1)]
+    employees = tier_employees + [
+        _make_employee(rng, i, used_clabes) for i in range(next_emp_id, next_emp_id + n_employees)
+    ]
     employee_names = [e["name"] for e in employees]
 
     vendors, contracts, purchase_orders = [], [], []
@@ -295,10 +348,11 @@ def build_estate(seed: int, out_dir: Path) -> tuple[Path, dict]:
         n_po = rng.randint(1, 3) if rng.random() < 0.7 else 0
         for _ in range(n_po):
             po_date = _random_date(rng, registered, dt.date(2024, 6, 1))
+            po_amount = round(rng.uniform(5_000, 400_000), 2)
             purchase_orders.append((
-                f"PO-{next(po_seq):05d}", rfc, po_date.isoformat(),
-                round(rng.uniform(5_000, 400_000), 2),
-                rng.choice(employee_names), rng.choice(employee_names),
+                f"PO-{next(po_seq):05d}", rfc, po_date.isoformat(), po_amount,
+                rng.choice(employee_names),
+                _approver_for_amount(rng, po_amount, approval_threshold, tiers),
                 f"Orden de compra: {rng.choice(GIRO_CONCEPTOS[category])}",
             ))
 
@@ -344,6 +398,7 @@ def build_estate(seed: int, out_dir: Path) -> tuple[Path, dict]:
     ctx = SimpleNamespace(
         rng=rng, company_rfc=company_rfc, company_clabe=company_clabe,
         employees=employees, employee_names=employee_names,
+        approval_threshold=approval_threshold, tiers=tiers,
         used_rfcs=used_rfcs, used_clabes=used_clabes,
         vendors=vendors, invoices=invoices, ledger=ledger, bank_txns=bank_txns,
         purchase_orders=purchase_orders, contracts=contracts, efos_list=efos_list,

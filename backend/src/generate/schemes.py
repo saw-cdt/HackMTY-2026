@@ -42,16 +42,6 @@ SCHEME_TYPES = [
     "threshold_splitting", "revenue_inflation",
 ]
 
-# Umbral de aprobacion: por encima de esto una compra necesita una
-# segunda firma. threshold_splitting lo evade; su decoy lo respeta con
-# un contrato marco que lo explica. Varia por seed (ctx.approval_threshold,
-# elegido en plant_all) porque el detector real -- en tools/, no aqui --
-# nunca debe conocer este numero de antemano: los jueces generan sus
-# estates con su propio umbral, y el detector tiene que inferirlo de
-# purchase_orders (ver plant_all para el razonamiento completo).
-APPROVAL_THRESHOLD_CHOICES = [50_000, 100_000, 250_000]
-
-
 # ---------------------------------------------------------------------
 # Helpers compartidos entre esquemas y decoys
 # ---------------------------------------------------------------------
@@ -173,11 +163,12 @@ def plant_kickback(ctx, scheme_id):
         E._random_date(rng, registered, dt.date(2024, 6, 1)).isoformat(),
         round(rng.uniform(200_000, 1_500_000), 2), f"Contrato de {category.lower()}",
     ))
+    po_amount = round(rng.uniform(50_000, 400_000), 2)
     ctx.purchase_orders.append((
         f"PO-{next(ctx.po_seq):05d}", rfc,
         E._random_date(rng, registered, dt.date(2024, 6, 1)).isoformat(),
-        round(rng.uniform(50_000, 400_000), 2),
-        rng.choice(ctx.employee_names), rng.choice(ctx.employee_names),
+        po_amount, rng.choice(ctx.employee_names),
+        E._approver_for_amount(rng, po_amount, ctx.approval_threshold, ctx.tiers),
         f"Orden de compra: {rng.choice(E.GIRO_CONCEPTOS[category])}",
     ))
 
@@ -244,10 +235,11 @@ def plant_round_tripping(ctx, scheme_id):
 
 def plant_threshold_splitting(ctx, scheme_id):
     """Varias facturas del mismo proveedor, fechas cercanas, cada una
-    justo debajo de ctx.approval_threshold, aprobadas por la misma persona."""
+    justo debajo de ctx.approval_threshold, aprobadas por la misma
+    persona -- un coordinador, porque todas caen bajo su propio techo."""
     rng = ctx.rng
     rfc, clabe, _name, category, _registered = _new_vendor(ctx)
-    approver = rng.choice(ctx.employee_names)
+    approver = rng.choice(ctx.tiers["coordinador"])
 
     base_date = E._random_date(rng, dt.date(2024, 3, 1), dt.date(2024, 10, 1))
     invoice_ids, txn_ids = [], []
@@ -325,10 +317,11 @@ def decoy_efos_presunto_limpio(ctx):
         ctx.contracts.append((f"CTR-{next(ctx.ctr_seq):05d}", rfc, start.isoformat(),
                                round(rng.uniform(100_000, 1_000_000), 2), "Contrato de servicios"))
     if not any(po[1] == rfc for po in ctx.purchase_orders):
+        po_amount = round(rng.uniform(20_000, 200_000), 2)
         ctx.purchase_orders.append((
-            f"PO-{next(ctx.po_seq):05d}", rfc, dt.date(2024, 3, 1).isoformat(),
-            round(rng.uniform(20_000, 200_000), 2),
-            rng.choice(ctx.employee_names), rng.choice(ctx.employee_names),
+            f"PO-{next(ctx.po_seq):05d}", rfc, dt.date(2024, 3, 1).isoformat(), po_amount,
+            rng.choice(ctx.employee_names),
+            E._approver_for_amount(rng, po_amount, ctx.approval_threshold, ctx.tiers),
             "Orden de compra de respaldo",
         ))
 
@@ -486,19 +479,16 @@ DECOY_BUILDERS = [
 
 def plant_all(ctx):
     """Decide con ctx.rng cuantos esquemas y decoys sembrar y de que tipo,
-    los siembra, y regresa (schemes, decoys) listos para ground_truth."""
-    rng = ctx.rng
+    los siembra, y regresa (schemes, decoys) listos para ground_truth.
 
-    # El umbral de aprobacion varia por seed. Esto no es solo variedad:
-    # el detector de threshold_splitting (en tools/, todavia no escrito)
-    # NUNCA puede traer este numero hardcodeado, porque los jueces generan
-    # sus propios estates con su propio umbral y nosotros no lo sabemos.
-    # El detector real lo infiere de purchase_orders:
-    #   SELECT approver, MAX(amount) AS techo
-    #   FROM purchase_orders GROUP BY approver ORDER BY techo
-    # Los aprobadores forman escalones; el techo del escalon mas bajo es
-    # el umbral, redondeado al multiplo de 50,000 mas cercano por arriba.
-    ctx.approval_threshold = rng.choice(APPROVAL_THRESHOLD_CHOICES)
+    ctx.approval_threshold y ctx.tiers ya vienen listos de estate.py (se
+    eligen antes de generar ninguna orden de compra, para que TODO el
+    estate -- limpio y sembrado -- respete el mismo escalon de autoridad).
+    El detector real (tools/) nunca conoce este numero de antemano: lo
+    infiere agrupando purchase_orders por approver y tomando el techo
+    del escalon mas bajo, redondeado al multiplo de 50,000 mas cercano
+    por arriba."""
+    rng = ctx.rng
 
     # 0 es un valor valido a proposito: un estate sin ningun esquema
     # sembrado (solo decoys) es un resultado legitimo, y un sistema que

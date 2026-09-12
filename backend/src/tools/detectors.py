@@ -148,10 +148,18 @@ def detect_round_tripping(conn, max_hops=4):
 # ---------------------------------------------------------------------
 def infer_approval_threshold(conn):
     """SELECT approver, MAX(amount) AS techo FROM purchase_orders
-    GROUP BY approver ORDER BY techo -- los aprobadores forman escalones;
-    el techo del escalon mas bajo es el umbral, redondeado al multiplo de
-    50,000 mas cercano por arriba. Nunca un numero hardcodeado: los
-    jueces generan sus estates con su propio umbral."""
+    GROUP BY approver ORDER BY techo -- los aprobadores forman escalones.
+
+    "El techo del escalon mas bajo" no es el minimo absoluto entre
+    aprobadores: con pocas personas por nivel, un aprobador puede tener
+    mala suerte y no acercarse nunca a su propio techo real, y tomar el
+    minimo entonces subestima el umbral. Un escalon es un GRUPO de
+    techos parecidos; lo que separa un escalon del siguiente es un
+    salto grande relativo. Por eso: se ordenan los techos, se busca el
+    salto relativo mas grande entre consecutivos, y el techo del
+    escalon mas bajo es el mayor valor ANTES de ese salto -- redondeado
+    al multiplo de 50,000 mas cercano por arriba. Nunca un numero
+    hardcodeado: los jueces generan sus estates con su propio umbral."""
     rows = conn.execute("""
         SELECT approver, MAX(amount) AS techo
         FROM purchase_orders
@@ -160,8 +168,20 @@ def infer_approval_threshold(conn):
     """).fetchall()
     if not rows:
         return None
-    techo_mas_bajo = rows[0]["techo"]
-    return math.ceil(techo_mas_bajo / 50_000) * 50_000
+
+    techos = [r["techo"] for r in rows]
+    frontera = 0
+    mejor_salto = 0.0
+    for i in range(1, len(techos)):
+        if techos[i - 1] <= 0:
+            continue
+        salto = techos[i] / techos[i - 1]
+        if salto > mejor_salto:
+            mejor_salto = salto
+            frontera = i
+
+    techo_escalon_mas_bajo = techos[frontera - 1] if frontera > 0 else techos[-1]
+    return math.ceil(techo_escalon_mas_bajo / 50_000) * 50_000
 
 
 def detect_threshold_splitting(conn, window_days=SPLIT_WINDOW_DAYS, min_count=MIN_SPLIT_COUNT):
