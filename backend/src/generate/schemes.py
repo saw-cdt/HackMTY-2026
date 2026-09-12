@@ -496,7 +496,10 @@ def plant_all(ctx):
     # el umbral, redondeado al multiplo de 50,000 mas cercano por arriba.
     ctx.approval_threshold = rng.choice(APPROVAL_THRESHOLD_CHOICES)
 
-    chosen_types = rng.sample(SCHEME_TYPES, k=rng.randint(1, 3))
+    # 0 es un valor valido a proposito: un estate sin ningun esquema
+    # sembrado (solo decoys) es un resultado legitimo, y un sistema que
+    # siempre encuentra algo es un sistema que siempre acusa.
+    chosen_types = rng.sample(SCHEME_TYPES, k=rng.randint(0, 3))
     schemes = [
         SCHEME_BUILDERS[scheme_type](ctx, f"S{i}_{scheme_type}_1")
         for i, scheme_type in enumerate(chosen_types, start=1)
