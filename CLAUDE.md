@@ -41,7 +41,7 @@ Lo que la v2 **sí reemplazó** y no debe tomarse de la v1: las 9 tablas en espa
 
 Notas prácticas:
 
-- Junto con estos van los materiales oficiales de los organizadores: `estate_schema.sql`, `submission_schema.json`, `ground_truth_schema.json`, `case_file_structure.md`, `validate_format.py` y `README.md`. **Todavía no están en el repo.**
+- Los materiales oficiales de los organizadores ya están en el repo, en `backend/`: `src/generate/schema.sql` (era `estate_schema.sql`, copiado tal cual — nombre de archivo distinto, columnas idénticas), `validate_format.py`, `submission_schema.json`, `ground_truth_schema.json`, `case_file_structure.md`, y su `OFFICIAL_SPEC_README.md` (renombrado para no chocar con el README del proyecto). También `submission_example.json` y `results_table_template.csv`, que no estaban en esta lista pero son del mismo paquete oficial.
 - El diseño descrito en esos documentos está cerrado. No se proponen cambios.
 
 ---
@@ -56,6 +56,38 @@ Estas se le dicen una vez al inicio y se repiten si se desvía:
 - El modelo nunca calcula montos ni decide si un hallazgo se publica.
 - Los prompts al modelo piden JSON corto de 2 o 3 campos. La única excepción es el narrative, bajo 150 palabras.
 - Rutas del estate por argumento. Nada hardcodeado.
+
+---
+
+## Estado actual
+
+*Última actualización: 2026-09-12. Si retomas después de que se llenó la
+ventana de contexto o se compactó la conversación, lee esto primero —
+te ahorra rehacer trabajo ya hecho y verificado.*
+
+**Todo el código vive bajo `backend/`, no en la raíz del repo.** Cuando
+un paso de abajo dice `src/algo.py` o `eval/algo.py`, en realidad es
+`backend/src/algo.py` / `backend/eval/algo.py`. Es una decisión
+deliberada (se pidió así para separar visualmente back de front), no un
+error ni un desvío por corregir. El `Makefile` y `validate_format.py`
+también están en `backend/`, no en la raíz.
+
+Progreso, paso por paso:
+
+- [x] **Paso 0**
+- [x] **Paso 1.1** — `backend/src/llm.py`.
+- [x] **Paso 1.2** — estructura completa + `backend/src/generate/schema.sql` + `backend/Makefile` (`check-format`, `check-isolation`).
+- [x] **Paso 2.1** — `backend/src/generate/estate.py`: las 8 tablas limpias.
+- [x] **Paso 2.2** — `backend/src/generate/schemes.py`: los 5 esquemas **y también los 5 decoys** (se adelantaron aquí en vez de en 2.3, porque `ground_truth_schema.json` los pide juntos en el mismo archivo).
+- [x] **Paso 2.3** — lo único que faltaba tras el 2.2 era permitir seeds con `schemes: []`; ya está.
+- [x] **Fase 3** — `backend/src/tools/{db,detectors,tools}.py`. Las 8 funciones + los 5 detectores completos. `infer_approval_threshold()` tiene DOS métodos (escalones por approver; si no son concluyentes, el hueco en la distribución de montos) y devuelve `None` si ninguno concluye — `detect_threshold_splitting` simplemente no corre en ese caso, en vez de inventar un umbral.
+  - Esto obligó a un ajuste retroactivo en `estate.py`/`schemes.py`: los aprobadores de `purchase_orders` ya no se asignan al azar. Hay 3 niveles reales (coordinador/gerente/director, 2-3 personas cada uno) con techo de autoridad (`approval_threshold`, `approval_threshold*5`, sin techo), elegidos una vez por seed antes de generar ninguna OC. Sin esto, agrupar por approver era ruido puro.
+  - `trace_money` y el detector de `round_tripping` exigen causalidad temporal entre saltos (`b.date >= a.date`) — sin esto, un salto podía "viajar al pasado" usando una transferencia vieja sin relación.
+  - Verificado: barrido de 40 seeds, recall 100% en los 5 detectores. `check-isolation` pasa.
+- [ ] **← Empieza aquí: Paso 4.1** (`backend/src/agent/investigator.py`). Nada de `agent/`, `report/`, `eval/harness.py` ni `cli.py` real existe todavía — solo el stub de `cli.py` que lanza `NotImplementedError`.
+
+Historial completo en `git log --oneline` (rama `main`); cada commit
+describe qué paso o fix cubre, en español.
 
 ---
 
