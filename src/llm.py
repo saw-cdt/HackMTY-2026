@@ -7,9 +7,14 @@ llm_calls / wall_clock_seconds que van en run_metadata del submission.json.
 Modo "record": si el prompt no está en caché, llama a Ollama y guarda la
 respuesta. Modo "replay": nunca llama a Ollama, solo lee el caché -> permite
 reproducir una corrida con la conexión apagada.
+
+Los contadores solo se mueven en una llamada real a Ollama. Un cache-hit
+es instantáneo y no cuenta, porque lo que miden es cuánto costó/tardó
+hablar con el modelo, no cuántas veces se le preguntó algo.
 """
 import hashlib
 import json
+import re
 import time
 import urllib.error
 import urllib.request
@@ -17,6 +22,8 @@ from pathlib import Path
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 TEMPERATURE = 0
+
+_FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
 
 
 class CacheMiss(Exception):
@@ -40,32 +47,63 @@ class LLMClient:
     def chat(self, prompt, system=None):
         """Devuelve la respuesta de texto del modelo para `prompt`.
 
-        Cuenta como una llamada (llm_calls += 1) tanto si viene de caché
-        como si viene de Ollama, porque el número mide cuántas veces el
-        agente le preguntó algo al modelo, no cuántas veces cruzó la red.
+        Un cache-hit no toca llm_calls ni wall_clock_seconds: esos
+        contadores miden llamadas reales a Ollama.
         """
-        start = time.monotonic()
         key = self._cache_key(prompt, system)
         path = self._cache_path(key)
 
-        try:
-            if path.exists():
-                return json.loads(path.read_text(encoding="utf-8"))["response"]
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8"))["response"]
 
-            if self.mode == "replay":
-                raise CacheMiss(
-                    f"modo replay sin conexión: no hay caché para este prompt (key={key})"
+        if self.mode == "replay":
+            raise CacheMiss(
+                f"modo replay sin conexión: no hay caché para este prompt (key={key})"
+            )
+
+        start = time.monotonic()
+        response = self._call_ollama(prompt, system)
+        elapsed = time.monotonic() - start
+
+        self.llm_calls += 1
+        self.wall_clock_seconds += elapsed
+
+        path.write_text(
+            json.dumps({"response": response}, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        return response
+
+    def chat_json(self, prompt, system=None, max_retries=2):
+        """Como chat(), pero parsea la respuesta como JSON.
+
+        Si el modelo devuelve algo que no parsea (o lo envuelve en
+        ```json ... ```), reintenta pidiéndole que corrija, hasta
+        max_retries veces. Cada reintento es un prompt distinto (por eso
+        cae en una entrada de caché distinta), así que si vuelve a fallar
+        no se queda repitiendo la misma respuesta rota para siempre.
+        """
+        current_prompt = prompt
+        last_error = None
+        last_raw = None
+
+        for attempt in range(max_retries + 1):
+            raw = self.chat(current_prompt, system=system)
+            last_raw = raw
+            try:
+                return json.loads(_extract_json(raw))
+            except (json.JSONDecodeError, ValueError) as e:
+                last_error = e
+                current_prompt = (
+                    f"{prompt}\n\n"
+                    f"Tu respuesta anterior no era JSON válido:\n{raw}\n\n"
+                    "Responde ÚNICAMENTE con JSON válido, sin texto antes ni después."
                 )
 
-            response = self._call_ollama(prompt, system)
-            path.write_text(
-                json.dumps({"response": response}, ensure_ascii=False, indent=2),
-                encoding="utf-8",
-            )
-            return response
-        finally:
-            self.llm_calls += 1
-            self.wall_clock_seconds += time.monotonic() - start
+        raise ValueError(
+            f"El modelo no devolvió JSON válido tras {max_retries + 1} intento(s): "
+            f"{last_error}\nÚltima respuesta: {last_raw!r}"
+        )
 
     def _cache_key(self, prompt, system):
         payload = json.dumps(
@@ -106,3 +144,19 @@ class LLMClient:
                 f"No se pudo llamar a Ollama en {self.ollama_url}: {e}"
             ) from e
         return data["response"]
+
+
+def _extract_json(text):
+    """Quita fences de markdown y recorta texto sobrante antes/después
+    del primer objeto o arreglo JSON, para tolerar respuestas como
+    "Claro, aquí está: ```json {...} ```" en vez de JSON puro."""
+    text = text.strip()
+    m = _FENCE_RE.search(text)
+    if m:
+        return m.group(1).strip()
+
+    starts = [i for i, c in enumerate(text) if c in "{["]
+    ends = [i for i, c in enumerate(text) if c in "}]"]
+    if starts and ends and ends[-1] > starts[0]:
+        return text[starts[0] : ends[-1] + 1]
+    return text
