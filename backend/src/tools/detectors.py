@@ -144,44 +144,86 @@ def detect_round_tripping(conn, max_hops=4):
 
 # ---------------------------------------------------------------------
 # threshold_splitting: agrupar por proveedor y ventana de fechas contra
-# el limite inferido de purchase_orders (nunca un umbral fijo).
+# el limite inferido de purchase_orders (nunca un umbral fijo, nunca
+# inventado: si ningun metodo es concluyente, None).
 # ---------------------------------------------------------------------
-def infer_approval_threshold(conn):
-    """SELECT approver, MAX(amount) AS techo FROM purchase_orders
-    GROUP BY approver ORDER BY techo -- los aprobadores forman escalones.
+STEP_MIN_SALTO_RATIO = 1.4    # que tan marcado debe ser el salto para confiar en el escalon
+GAP_CANDIDATES = [50_000, 100_000, 250_000, 500_000]
+GAP_BAND_RATIO = 0.20         # ventana +/- 20% alrededor de cada cifra redonda
+GAP_MIN_RATIO = 3.0           # veces mas montos debajo que encima para que el hueco cuente
+GAP_MIN_COUNT = 3             # minimo de montos "debajo" para no confiar en un punado
 
-    "El techo del escalon mas bajo" no es el minimo absoluto entre
-    aprobadores: con pocas personas por nivel, un aprobador puede tener
-    mala suerte y no acercarse nunca a su propio techo real, y tomar el
-    minimo entonces subestima el umbral. Un escalon es un GRUPO de
-    techos parecidos; lo que separa un escalon del siguiente es un
-    salto grande relativo. Por eso: se ordenan los techos, se busca el
-    salto relativo mas grande entre consecutivos, y el techo del
-    escalon mas bajo es el mayor valor ANTES de ese salto -- redondeado
-    al multiplo de 50,000 mas cercano por arriba. Nunca un numero
-    hardcodeado: los jueces generan sus estates con su propio umbral."""
+
+def infer_approval_threshold(conn):
+    """Dos metodos, en ese orden. Si ninguno es concluyente, None -- y
+    quien llama (detect_threshold_splitting) no corre sobre ese estate.
+    Inventar un umbral produce falsas acusaciones, y eso pesa mas que
+    perder un esquema.
+
+    Metodo 1 -- escalones por approver:
+        SELECT approver, MAX(amount) AS techo FROM purchase_orders
+        GROUP BY approver ORDER BY techo
+    Un escalon real es un salto marcado entre techos ordenados, no una
+    progresion suave (con pocas personas por nivel, una puede tener
+    mala suerte y no acercarse a su propio techo, asi que el minimo
+    absoluto no sirve -- hay que encontrar el salto). Si el salto mas
+    grande no supera STEP_MIN_SALTO_RATIO, no hay escalones claros.
+
+    Metodo 2 -- el hueco en la distribucion (respaldo): para cada cifra
+    redonda candidata (50k/100k/250k/500k), cuenta montos justo debajo y
+    justo encima. Acumulacion debajo + escasez encima es la firma del
+    umbral. Si ningun candidato muestra un hueco claro, tambien None."""
+    umbral = _infer_por_escalones(conn)
+    if umbral is not None:
+        return umbral
+    return _infer_por_hueco(conn)
+
+
+def _infer_por_escalones(conn):
     rows = conn.execute("""
         SELECT approver, MAX(amount) AS techo
         FROM purchase_orders
         GROUP BY approver
         ORDER BY techo
     """).fetchall()
-    if not rows:
+    if len(rows) < 2:
         return None
 
     techos = [r["techo"] for r in rows]
-    frontera = 0
-    mejor_salto = 0.0
+    frontera, mejor_salto = 0, 0.0
     for i in range(1, len(techos)):
         if techos[i - 1] <= 0:
             continue
         salto = techos[i] / techos[i - 1]
         if salto > mejor_salto:
-            mejor_salto = salto
-            frontera = i
+            mejor_salto, frontera = salto, i
 
-    techo_escalon_mas_bajo = techos[frontera - 1] if frontera > 0 else techos[-1]
+    if mejor_salto < STEP_MIN_SALTO_RATIO:
+        return None  # progresion suave: no hay escalones claros que confiar
+
+    techo_escalon_mas_bajo = techos[frontera - 1]
     return math.ceil(techo_escalon_mas_bajo / 50_000) * 50_000
+
+
+def _infer_por_hueco(conn):
+    amounts = [r["amount"] for r in conn.execute("SELECT amount FROM purchase_orders").fetchall()]
+    if len(amounts) < GAP_MIN_COUNT:
+        return None
+
+    mejor = None
+    for candidato in GAP_CANDIDATES:
+        banda = candidato * GAP_BAND_RATIO
+        debajo = sum(1 for a in amounts if candidato - banda <= a < candidato)
+        encima = sum(1 for a in amounts if candidato <= a < candidato + banda)
+        if debajo < GAP_MIN_COUNT:
+            continue
+        proporcion = debajo / (encima + 1)
+        if mejor is None or proporcion > mejor[1]:
+            mejor = (candidato, proporcion)
+
+    if mejor is None or mejor[1] < GAP_MIN_RATIO:
+        return None
+    return mejor[0]
 
 
 def detect_threshold_splitting(conn, window_days=SPLIT_WINDOW_DAYS, min_count=MIN_SPLIT_COUNT):
