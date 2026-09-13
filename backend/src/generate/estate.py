@@ -30,10 +30,19 @@ import random
 import re
 import sqlite3
 import string
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import schemes
+
+# Solo para la pasada de verificacion "poblacion limpia" (ver
+# enforce_clean_population mas abajo): corre los mismos 5 detectores que
+# usara el agente sobre el estate ya completo. Import en la direccion
+# generate/ -> tools/, la unica permitida (tools/ nunca importa nada de
+# generate/).
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
+import detectors
 
 SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
@@ -285,6 +294,99 @@ def _approver_for_amount(rng, amount, threshold, tiers):
 
 
 # ---------------------------------------------------------------------
+# Pasada de verificacion: ningun proveedor de la poblacion limpia (fuera
+# de los que schemes.plant_all() registro como scheme o decoy) puede
+# cumplir, por azar, la firma de un esquema sembrado sin tener respaldo
+# documental. Corre sobre el estate ya completo (limpio + esquemas +
+# decoys) los mismos 5 detectores que usara el agente y, si alguno
+# dispara sobre un proveedor limpio sin contrato ni orden de compra, le
+# agrega un contrato -- nunca una OC nueva, porque una OC nueva podria
+# mover infer_approval_threshold() (agrupa por approver) y de paso
+# afectar a otros proveedores; un contrato no lo toca, ningun detector
+# lee contracts salvo phantom_vendor.
+# ---------------------------------------------------------------------
+def _protected_rfcs(schemes_planted, decoys_planted):
+    rfcs = set()
+    for item in list(schemes_planted) + list(decoys_planted):
+        for ent in item.get("entities", []):
+            if ent.startswith("RFC:"):
+                rfcs.add(ent[4:])
+    return rfcs
+
+
+def _build_memory_conn(ctx):
+    conn = sqlite3.connect(":memory:")
+    conn.row_factory = sqlite3.Row
+    conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+    conn.executemany("INSERT INTO vendors VALUES (?,?,?,?,?,?,?)", ctx.vendors)
+    conn.executemany("INSERT INTO invoices VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", ctx.invoices)
+    conn.executemany("INSERT INTO ledger VALUES (?,?,?,?,?,?,?,?,?,?)", ctx.ledger)
+    conn.executemany("INSERT INTO bank_txns VALUES (?,?,?,?,?,?,?)", ctx.bank_txns)
+    conn.executemany("INSERT INTO purchase_orders VALUES (?,?,?,?,?,?,?)", ctx.purchase_orders)
+    conn.executemany("INSERT INTO contracts VALUES (?,?,?,?,?)", ctx.contracts)
+    conn.executemany("INSERT INTO employees VALUES (?,?,?,?,?)", [
+        (e["emp_id"], e["name"], e["role"], e["bank_clabe"], e["hire_date"]) for e in ctx.employees
+    ])
+    conn.executemany("INSERT INTO efos_list VALUES (?,?,?,?)", ctx.efos_list)
+    conn.commit()
+    return conn
+
+
+def _tiene_respaldo_documental(conn, rfc):
+    if conn.execute("SELECT 1 FROM contracts WHERE vendor_rfc = ?", (rfc,)).fetchone():
+        return True
+    return conn.execute(
+        "SELECT 1 FROM purchase_orders WHERE vendor_rfc = ?", (rfc,)
+    ).fetchone() is not None
+
+
+def _dar_contrato(ctx, rfc):
+    rng = ctx.rng
+    vendor = next(v for v in ctx.vendors if v[0] == rfc)
+    _, _, registered_iso, _, _clabe, category, _ = vendor
+    registered = dt.date.fromisoformat(registered_iso)
+    start = _random_date(rng, registered, dt.date(2024, 6, 1))
+    value = round(rng.uniform(100_000, 3_000_000), 2)
+    ctx.contracts.append((
+        f"CTR-{next(ctx.ctr_seq):05d}", rfc, start.isoformat(), value,
+        f"Contrato de {category.lower()}",
+    ))
+
+
+def enforce_clean_population(ctx, schemes_planted, decoys_planted):
+    """Regresa la lista (ordenada, para determinismo) de RFC de la
+    poblacion limpia a los que se les agrego un contrato porque disparaban
+    un detector sin ninguna justificacion documental."""
+    protegidos = _protected_rfcs(schemes_planted, decoys_planted)
+    vendor_rfcs = {v[0] for v in ctx.vendors}
+
+    conn = _build_memory_conn(ctx)
+    try:
+        candidatos = (
+            detectors.detect_phantom_vendor(conn)
+            + detectors.detect_kickback(conn)
+            + detectors.detect_round_tripping(conn)
+            + detectors.detect_threshold_splitting(conn)
+            + detectors.detect_revenue_inflation(conn)
+        )
+        sospechosos = {
+            c["rfc"] for c in candidatos
+            if c["rfc"] in vendor_rfcs and c["rfc"] not in protegidos
+        }
+        # sorted(): sospechosos es un set -- su orden de iteracion no es
+        # determinista entre procesos (hash randomization de strings), y
+        # el mismo seed tiene que producir el mismo estate byte a byte.
+        reparados = [rfc for rfc in sorted(sospechosos)
+                     if not _tiene_respaldo_documental(conn, rfc)]
+    finally:
+        conn.close()
+
+    for rfc in reparados:
+        _dar_contrato(ctx, rfc)
+    return reparados
+
+
+# ---------------------------------------------------------------------
 # Construccion del estate
 # ---------------------------------------------------------------------
 def build_estate(seed: int, out_dir: Path) -> tuple[Path, dict]:
@@ -405,6 +507,7 @@ def build_estate(seed: int, out_dir: Path) -> tuple[Path, dict]:
         inv_seq=inv_seq, txn_seq=txn_seq, po_seq=po_seq, ctr_seq=ctr_seq, entry_seq=entry_seq,
     )
     schemes_planted, decoys_planted = schemes.plant_all(ctx)
+    reparados = enforce_clean_population(ctx, schemes_planted, decoys_planted)
 
     ground_truth = {
         "seed": seed,
@@ -436,6 +539,7 @@ def build_estate(seed: int, out_dir: Path) -> tuple[Path, dict]:
         "n_efos": len(efos_list),
         "n_schemes": len(schemes_planted),
         "n_decoys": len(decoys_planted),
+        "n_reparados": len(reparados),
         "truth_path": truth_path,
     }
     return db_path, stats
@@ -496,6 +600,7 @@ def main():
     print(f"   proveedores: {stats['n_vendors']}  empleados: {stats['n_employees']}  "
           f"facturas: {stats['n_invoices']}  en efos_list: {stats['n_efos']}")
     print(f"   esquemas sembrados: {stats['n_schemes']}  decoys sembrados: {stats['n_decoys']}")
+    print(f"   proveedores limpios reparados (respaldo documental agregado): {stats['n_reparados']}")
 
 
 if __name__ == "__main__":
