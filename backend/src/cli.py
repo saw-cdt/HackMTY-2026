@@ -14,6 +14,7 @@ Uso:
 """
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -33,6 +34,7 @@ import ui_block
 from llm import LLMClient
 
 DEFAULT_MODEL = "qwen2.5:7b"
+DEFAULT_GEMINI_MODEL = "gemini-3.6-flash"
 
 
 def _inferir_seed(estate_path):
@@ -42,14 +44,19 @@ def _inferir_seed(estate_path):
     return int(m.group(1)) if m else 0
 
 
-def run(estate_path, out_path, model=DEFAULT_MODEL, cache_dir=None,
-        mode="record", ollama_url=None, seed=None):
+def run(estate_path, out_path, model=None, cache_dir=None,
+        mode="record", ollama_url=None, seed=None,
+        backend="ollama", gemini_api_key=None):
     """Corre el ciclo completo y escribe submission.json en out_path.
     Regresa el dict de submission (por si el llamador quiere inspeccionarlo,
     ej. eval/harness.py mas adelante) ademas de escribirlo a disco."""
+    if model is None:
+        model = DEFAULT_GEMINI_MODEL if backend == "gemini" else DEFAULT_MODEL
+
     conn = db.connect(estate_path)
     cache_dir = cache_dir or str(Path(out_path).parent / ".llm_cache")
-    llm = LLMClient(model=model, cache_dir=cache_dir, mode=mode, ollama_url=ollama_url)
+    llm = LLMClient(model=model, cache_dir=cache_dir, mode=mode, ollama_url=ollama_url,
+                     backend=backend, gemini_api_key=gemini_api_key)
 
     if seed is None:
         seed = _inferir_seed(estate_path)
@@ -135,12 +142,18 @@ def main():
     parser = argparse.ArgumentParser(description="The Forensic Auditor -- corre el ciclo completo")
     parser.add_argument("--estate", required=True, help="ruta al estate .db")
     parser.add_argument("--out", required=True, help="ruta de salida para submission.json")
-    parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument("--model", default=None,
+                         help=f"default: {DEFAULT_MODEL} (ollama) / {DEFAULT_GEMINI_MODEL} (gemini)")
     parser.add_argument("--cache-dir", default=None,
                          help="cache de prompts (default: junto a --out, en .llm_cache/)")
     parser.add_argument("--mode", choices=["record", "replay"], default="record",
-                         help="record llama a Ollama si falta cache; replay solo lee, falla si no hay entrada")
+                         help="record llama al backend si falta cache; replay solo lee, falla si no hay entrada")
     parser.add_argument("--ollama-url", default=None)
+    parser.add_argument("--backend", choices=["ollama", "gemini"],
+                         default=os.environ.get("MODEL_BACKEND", "ollama"),
+                         help="tambien via variable de entorno MODEL_BACKEND")
+    parser.add_argument("--gemini-api-key", default=None,
+                         help="default: variable de entorno GEMINI_API_KEY")
     parser.add_argument("--seed", type=int, default=None,
                          help="si no se da, se infiere de estate_seedNNN.db")
     args = parser.parse_args()
@@ -148,6 +161,7 @@ def main():
     submission = run(
         args.estate, args.out, model=args.model, cache_dir=args.cache_dir,
         mode=args.mode, ollama_url=args.ollama_url, seed=args.seed,
+        backend=args.backend, gemini_api_key=args.gemini_api_key,
     )
 
     meta = submission["run_metadata"]

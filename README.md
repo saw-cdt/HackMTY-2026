@@ -38,19 +38,27 @@ backend/
   src/
     generate/   generador del estate + ground truth (único lugar,
                  junto con eval/, donde puede aparecer "ground_truth")
-    tools/      las 8 herramientas SQL sobre el estate
-    agent/      investigador, retador, validador
-    report/     serializa submission.json y el case file
-    cli.py      entrypoint; recibe la ruta del estate en tiempo de ejecución
-    llm.py      envoltorio de Ollama: temperatura 0, caché por sha256,
-                contadores llm_calls / wall_clock_seconds, modo replay sin red
-  eval/         harness de métrica (recall, falsas acusaciones)
-  out/          estates generados, ground truths, submission.json
+    tools/      las 8 herramientas SQL + los 5 detectores sobre el estate
+    agent/      investigador (4.1), retador (4.2), validador (4.3)
+    report/     case_file.py (HTML autocontenido), ui_block.py (bloque `ui`
+                para el frontend), results_chart.py (imagen de la tabla
+                101-110 para la diapositiva)
+    cli.py      entrypoint real; investigador -> retador -> validador por
+                cada candidato, escribe submission.json (+ bloque `ui`)
+    llm.py      envoltorio del modelo: Ollama local por default, Gemini
+                como respaldo (--backend gemini / MODEL_BACKEND=gemini),
+                temperatura 0, caché por sha256, modo replay sin red
+  eval/         harness de métrica (recall, falsas acusaciones, CSV por seed)
+  out/          estates generados, ground truths, submission.json (gitignored)
   Makefile      check-format (corre validate_format.py) y check-isolation
                 (falla si "ground_truth" se filtra fuera de generate/)
   validate_format.py   validador oficial de formato (verbatim, sin tocar)
 frontend/
-  src/          Vite + React
+  src/          Vite + React — 4 estados de una sola app (no rutas):
+                reposo (DropZone) -> corriendo (GraphView, revelado por
+                step) -> resultado (StatCards + ContrastPanel auto-abierto)
+                -> leads (LeadsList con búsqueda). Grafo SVG a mano,
+                posiciones fijas, sin librerías externas ni CDN.
 ```
 
 `backend/src/generate/schema.sql` es copia byte-idéntica de
@@ -59,30 +67,52 @@ los jueces los leen directo y cada exhibit cita un `source_table` por nombre.
 
 ## Estado actual
 
-- [x] `llm.py` — envoltorio de Ollama verificado (cache-hit no incrementa
-      `llm_calls` ni tarda, `chat_json` reintenta si la respuesta no parsea)
-- [x] Estructura de `src/` + `eval/` + `out/` según el contrato
-- [x] `schema.sql` oficial copiado tal cual
-- [x] `Makefile` con `check-format` y `check-isolation` (ambos verificados)
-- [ ] Generador del estate + ground truth por seed
-- [ ] Las 8 herramientas SQL (`tools/`)
-- [ ] Investigador / Retador / Validador (`agent/`)
-- [ ] Serialización de `submission.json` + `case_file.html` (`report/`)
-- [ ] `cli.py` conectado al pipeline real
-- [ ] Frontend: drop de estate, grafo, contraste hallazgo vs. decoy
+Pipeline completo, extremo a extremo (ver `CLAUDE.md` para el detalle fase
+por fase). Todo lo de abajo está construido y corrido de verdad, no es plan:
+
+- [x] Generador del estate + ground truth por seed (`generate/`), incluida
+      la población limpia sin falsos positivos (`enforce_clean_population`)
+- [x] Las 8 herramientas SQL + los 5 detectores (`tools/`)
+- [x] Investigador / Retador / Validador (`agent/`) — Fases 4.1-4.3
+- [x] `cli.py` conecta el ciclo completo y escribe `submission.json` real,
+      incluido el bloque `ui` (`report/ui_block.py`) que consume el frontend
+- [x] `case_file.py` — HTML autocontenido con las 5 secciones oficiales,
+      SVG del money trail dibujado en código
+- [x] `llm.py` — Ollama por default, **Gemini como respaldo real**
+      (`--backend gemini` / `MODEL_BACKEND=gemini`, con reintento
+      automático ante rate-limit y sobrecarga temporal de la API)
+- [x] `Makefile` (`check-format`, `check-isolation`) y corrida oficial de
+      reporte (seeds 101-110) ya hecha
+- [x] Frontend: las 4 pantallas de `frontend/Frontend.md` como estados de
+      una sola app — drop del estate, grafo progresivo, contraste
+      auto-abierto, leads con búsqueda — verificado con conexión apagada
 
 ## Cómo correr lo que existe
 
 ```bash
 cd backend
-make check-isolation      # pasa vacío: aun no hay ground_truth en ningun .py
-
-# check-format necesita un out/submission.json real, que sale del
-# pipeline todavia no construido (generate/ -> tools/ -> agent/ -> report/)
+make check-isolation                # 0 -- ground_truth no se filtra
+python -m src.cli --estate out/estate_seed004.db --out out/submission.json
+make check-format                   # valida ese submission.json
 ```
 
-Ollama corre local (`qwen2.5:7b` de momento) en `http://localhost:11434`;
-`backend/src/llm.py` es la única pieza que le habla.
+Ollama corre local (`qwen2.5:7b` de momento) en `http://localhost:11434`.
+Para usar Gemini en vez de Ollama (respaldo, misma interfaz):
+
+```bash
+export GEMINI_API_KEY="tu-key"      # nunca en el repo
+python -m src.cli --estate out/estate_seed004.db --out out/submission_gemini.json --backend gemini
+```
+
+`backend/src/llm.py` es la única pieza que le habla a cualquiera de los dos.
+
+Frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ## Las reglas que no se negocian
 
