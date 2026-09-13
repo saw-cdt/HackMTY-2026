@@ -1,0 +1,187 @@
+{
+  "seed": 4,
+  "company_rfc": "HJD1210074J1",
+  "company_label": "EMPRESA INVESTIGADA · HJD1210074J1",
+  "period": "2024-01-01 a 2024-12-31",
+  "run_metadata": {
+    "llm_calls": 23,
+    "mxn_cost": 0.0,
+    "wall_clock_seconds": 41.2,
+    "deterministic": true,
+    "model": "qwen2.5:7b (Ollama local, tempera 0)"
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "scheme_type": "round_tripping",
+      "severity": "alta",
+      "entities": ["RFC:YJC220607DY9", "RFC:DFZ210706QA8"],
+      "peso_amount": 578363.27,
+      "return_pct": 94.8,
+      "narrative": "GRUPO factura servicios de consultoría (INV-00120, $578,363.27) que se pagan al proveedor YJC220607DY9. En 9 días el dinero pasa por el CLABE de un segundo proveedor (DFZ210706QA8) y regresa al CLABE de la propia empresa: $548,547.15, el 94.8% del desembolso original. No existe factura que respalde el movimiento de retorno: es el mismo dinero de la compañía dando la vuelta. El ciclo se detectó trazando CLABEs con recorrido recursivo (bank_txns) hasta cerrar el origen.",
+      "challenger": {
+        "survives": true,
+        "argument": "El movimiento entre proveedores podría ser una subcontratación legítima: el segundo proveedor prestó el servicio y le pagó a la empresa el sobrante de un anticipo. Sin embargo, no existe contrato, orden de compra ni factura que documente ese retorno, y la secuencia de fechas es exacta (9 días).",
+        "why_not_enough": "La subcontratación legítima deja rastro documental: factura del subcontratista, contrato o al menos un concepto. Aquí el retorno a la CLABE de la empresa no tiene ninguna factura detrás."
+      },
+      "exhibits": [
+        { "record_id": "INV-00120", "source_table": "invoices", "date": "2024-05-18", "amount": 578363.27, "note": "Factura de servicios de consultoría (Diagnostico organizacional)", "peso": true },
+        { "record_id": "BNK-00116", "source_table": "bank_txns", "date": "2024-06-23", "amount": 578363.27, "note": "Pago factura INV-00120 — empresa → YJC220607DY9", "peso": true },
+        { "record_id": "BNK-00117", "source_table": "bank_txns", "date": "2024-06-26", "amount": 563441.34, "note": "Transferencia entre empresas — YJC220607DY9 → DFZ210706QA8", "peso": false },
+        { "record_id": "BNK-00118", "source_table": "bank_txns", "date": "2024-07-01", "amount": 548547.15, "note": "Transferencia entre empresas — DFZ210706QA8 → CLABE de la empresa", "peso": false }
+      ],
+      "money_trail": [
+        { "from": "012001684038854217", "to": "021010042137601079", "from_label": "HJD1210074J1 · EMPRESA", "to_label": "YJC220607DY9 · CONSULTORES PROFESIONAL", "amount": 578363.27, "date": "2024-06-23", "exhibit_id": "BNK-00116", "note": "Pago factura INV-00120" },
+        { "from": "021010042137601079", "to": "036022532619383175", "from_label": "YJC220607DY9 · CONSULTORES PROFESIONAL", "to_label": "DFZ210706QA8 · SOLUCIONES INTEGRAL", "amount": 563441.34, "date": "2024-06-26", "exhibit_id": "BNK-00117", "note": "Transferencia entre empresas" },
+        { "from": "036022532619383175", "to": "012001684038854217", "from_label": "DFZ210706QA8 · SOLUCIONES INTEGRAL", "to_label": "HJD1210074J1 · EMPRESA", "amount": 548547.15, "date": "2024-07-01", "exhibit_id": "BNK-00118", "note": "El dinero regresa al CLABE de la empresa" }
+      ]
+    },
+    {
+      "id": "F2",
+      "scheme_type": "threshold_splitting",
+      "severity": "media",
+      "entities": ["RFC:QPC000828I19"],
+      "peso_amount": 447919.21,
+      "narrative": "GRUPO DEL NORTE emite 5 facturas entre el 30 de marzo y el 7 de abril de 2024, todas entre $85,000 y $96,000, cada una bajo el umbral de aprobación de nivel coordinador. Las 5 órdenes de compra (PO-00075 a PO-00079) las aprueba la misma persona (EDUARDO GARCIA RIVERA). Sumadas, las cinco facturas superan el escalón que cada una evade por separado: el monto se partió para que ninguna requiera aprobación de nivel superior.",
+      "challenger": {
+        "survives": true,
+        "argument": "Cinco compras de bajo monto en fechas cercanas pueden responder a una campaña con entregas parciales: cada pedido se ejecuta y aprobó en su tramo.",
+        "why_not_enough": "No hay contrato marco ni orden de compra consolidada que explique el fraccionamiento; todas caen en los mismos 8 días, con el mismo proveedor y el mismo aprobador: es el patrón de un monto único partido para evadir el escalón."
+      },
+      "exhibits": [
+        { "record_id": "INV-00121", "source_table": "invoices", "date": "2024-03-30", "amount": 88705.57, "note": "Diseno de material promocional", "peso": true },
+        { "record_id": "INV-00122", "source_table": "invoices", "date": "2024-04-02", "amount": 95360.42, "note": "Campana de marketing digital", "peso": true },
+        { "record_id": "INV-00123", "source_table": "invoices", "date": "2024-04-05", "amount": 87950.53, "note": "Diseno de material promocional", "peso": true },
+        { "record_id": "INV-00124", "source_table": "invoices", "date": "2024-04-02", "amount": 90526.2, "note": "Servicios de publicidad", "peso": true },
+        { "record_id": "INV-00125", "source_table": "invoices", "date": "2024-04-07", "amount": 85376.49, "note": "Servicios de publicidad", "peso": true },
+        { "record_id": "PO-00075", "source_table": "purchase_orders", "date": "2024-03-30", "amount": 88705.57, "note": "Aprobada por EDUARDO GARCIA RIVERA (coordinador)", "peso": false },
+        { "record_id": "PO-00079", "source_table": "purchase_orders", "date": "2024-04-07", "amount": 85376.49, "note": "Aprobada por EDUARDO GARCIA RIVERA (coordinador)", "peso": false }
+      ],
+      "money_trail": [
+        { "from": "012001684038854217", "to": "014019033621954893", "from_label": "HJD1210074J1 · EMPRESA", "to_label": "QPC000828I19 · GRUPO DEL NORTE", "amount": 88705.57, "date": "2024-05-02", "exhibit_id": "BNK-00119", "note": "Pago INV-00121" },
+        { "from": "012001684038854217", "to": "014019033621954893", "from_label": "HJD1210074J1 · EMPRESA", "to_label": "QPC000828I19 · GRUPO DEL NORTE", "amount": 95360.42, "date": "2024-05-13", "exhibit_id": "BNK-00120", "note": "Pago INV-00122" },
+        { "from": "012001684038854217", "to": "014019033621954893", "from_label": "HJD1210074J1 · EMPRESA", "to_label": "QPC000828I19 · GRUPO DEL NORTE", "amount": 87950.53, "date": "2024-04-27", "exhibit_id": "BNK-00121", "note": "Pago INV-00123" },
+        { "from": "012001684038854217", "to": "014019033621954893", "from_label": "HJD1210074J1 · EMPRESA", "to_label": "QPC000828I19 · GRUPO DEL NORTE", "amount": 90526.2, "date": "2024-05-12", "exhibit_id": "BNK-00122", "note": "Pago INV-00124" },
+        { "from": "012001684038854217", "to": "014019033621954893", "from_label": "HJD1210074J1 · EMPRESA", "to_label": "QPC000828I19 · GRUPO DEL NORTE", "amount": 85376.49, "date": "2024-04-11", "exhibit_id": "BNK-00123", "note": "Pago INV-00125" }
+      ]
+    },
+    {
+      "id": "F3",
+      "scheme_type": "kickback",
+      "severity": "media",
+      "entities": ["RFC:KQE030627E41", "EMP:0008"],
+      "peso_amount": 21324.54,
+      "narrative": "CONSULTORES MEXICANA SC cobra $195,802.65 por servicios de consultoría (INV-00126) con contrato y orden de compra en regla. Nueve días después, el proveedor transfiere $21,324.54 — el 10.9% del pago — a la CLABE personal de JUAN GARCIA GARCIA (EMP:0008), Director de Compras. El concepto figura como «Reembolso de gastos», pero es un pago directo del proveedor a un empleado de la empresa que aprobó la operación.",
+      "challenger": {
+        "survives": true,
+        "argument": "El «reembolso de gastos» podría ser un gasto real del vendedor saldado por el proveedor en nombre del empleado, un arreglo comercial colateral ajeno a la factura.",
+        "why_not_enough": "Un reembolso del proveedor a un empleado del cliente es por definición un flujo hacia un funcionario de la empresa compradora; no hay factura, contrato ni recibo que documente ese gasto. El porcentaje exacto del 10.9% del pago de la factura es la firma de una comisión."
+      },
+      "exhibits": [
+        { "record_id": "BNK-00125", "source_table": "bank_txns", "date": "2024-07-31", "amount": 21324.54, "note": "Transferencia KQE030627E41 → CLABE de EMP:0008 (Reembolso de gastos)", "peso": true },
+        { "record_id": "BNK-00124", "source_table": "bank_txns", "date": "2024-07-22", "amount": 195802.65, "note": "Pago factura INV-00126", "peso": false },
+        { "record_id": "INV-00126", "source_table": "invoices", "date": "2024-06-21", "amount": 195802.65, "note": "Servicios de consultoria administrativa", "peso": false },
+        { "record_id": "CTR-00014", "source_table": "contracts", "date": "2021-08-25", "amount": 1235441.63, "note": "Contrato de consultoria administrativa", "peso": false },
+        { "record_id": "PO-00080", "source_table": "purchase_orders", "date": "2021-04-13", "amount": 246779.73, "note": "Orden de compra", "peso": false }
+      ],
+      "money_trail": [
+        { "from": "012001684038854217", "to": "072001318571306800", "from_label": "HJD1210074J1 · EMPRESA", "to_label": "KQE030627E41 · CONSULTORES MEXICANA", "amount": 195802.65, "date": "2024-07-22", "exhibit_id": "BNK-00124", "note": "Pago factura INV-00126" },
+        { "from": "072001318571306800", "to": "014022290879350189", "from_label": "KQE030627E41 · CONSULTORES MEXICANA", "to_label": "EMP:0008 · JUAN GARCIA GARCIA (Director de Compras)", "amount": 21324.54, "date": "2024-07-31", "exhibit_id": "BNK-00125", "note": "Reembolso de gastos — 10.9% del pago" }
+      ]
+    }
+  ],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:MDH1512018D5",
+      "entity_label": "SERVICIOS PROFESIONAL SC",
+      "signal": "proveedor_empleado_mismo_banco",
+      "reason": "El proveedor y EMP:0002 (ANA RAMIREZ GONZALEZ) bancan en la misma institución (ambos CLABE 072...) pero son cuentas distintas; no existe ninguna transferencia entre ellas. cuyo_clabe confirma titularidad distinta y trace_money no encuentra retorno.",
+      "tool_calls_made": ["whose_clabe", "trace_money", "invoices_by"],
+      "closed_by": "investigator"
+    },
+    {
+      "entity": "RFC:WRV130924VK1",
+      "entity_label": "SUMINISTROS DEL CENTRO SA",
+      "signal": "facturacion_repetida_bajo_limite_de_aprobacion",
+      "reason": "La facturación mensual recurrente de $83,765.60 está respaldada por el contrato marco CTR-00015 con cuota mensual fija; los pagos mensuales idénticos corresponden a esa cuota, no a fraccionamiento.",
+      "tool_calls_made": ["support_for", "invoices_by"],
+      "closed_by": "investigator"
+    },
+    {
+      "entity": "RFC:JND001019XK9",
+      "entity_label": "SERVICIOS REGIOMONTANA SA",
+      "signal": "efos_presunto_sin_materialidad_aparente",
+      "reason": "El retador demostró que la operación se sostiene: aunque el proveedor figura en la lista 69-B como presunto, tiene contrato vigente, órdenes de compra que respaldan sus facturas y pagos únicos sin retorno de fondos. La señal del detector (listado 69-B) no alcanza para una acusación.",
+      "tool_calls_made": ["vendor", "support_for", "trace_money"],
+      "closed_by": "challenger"
+    },
+    {
+      "entity": "RFC:EJG120824W32",
+      "entity_label": "OPERADORA INDUSTRIAL SC",
+      "signal": "retorno_de_fondos_a_la_empresa",
+      "reason": "Hay dinero de vuelta a la empresa, pero es legítimo: el proveedor también es cliente y el retorno corresponde al pago de su propia factura INV-00133 por venta de producto terminado; reciprocity() muestra la factura que justifica el flujo en sentido inverso.",
+      "tool_calls_made": ["reciprocity", "trace_money", "invoices_by"],
+      "closed_by": "investigator"
+    },
+    {
+      "entity": "RFC:IQZ9808159Y5",
+      "entity_label": "SOLUCIONES MEXICANA SA",
+      "signal": "phantom_vendor_efos_sin_contrato_ni_oc",
+      "reason": "El hallazgo en borrador citaba el registro INV-00999 como factura sin contrato; el validador comprobó que ese record_id no existe en el estate y que el monto no reconcilia al 2% contra ninguna tabla: el hallazgo no se publica.",
+      "tool_calls_made": ["vendor", "support_for", "invoices_by"],
+      "closed_by": "validator"
+    }
+  ],
+
+  "ui": {
+    "company": { "rfc": "HJD1210074J1", "name": "Empresa Investigada" },
+
+    "nodes": [
+      { "id": "RFC:YJC220607DY9", "label": "Consultores Profesional", "type": "vendor", "state": "accused", "step": 3 },
+      { "id": "RFC:DFZ210706QA8", "label": "Soluciones Integral", "type": "vendor", "state": "accused", "step": 3 },
+      { "id": "RFC:QPC000828I19", "label": "Grupo del Norte", "type": "vendor", "state": "accused", "step": 3 },
+      { "id": "RFC:KQE030627E41", "label": "Consultores Mexicana", "type": "vendor", "state": "accused", "step": 3 },
+      { "id": "EMP:0008", "label": "Juan Garcia Garcia", "type": "employee", "state": "accused", "step": 3 },
+      { "id": "RFC:MDH1512018D5", "label": "Servicios Profesional SC", "type": "vendor", "state": "dismissed", "step": 2 },
+      { "id": "RFC:WRV130924VK1", "label": "Suministros del Centro SA", "type": "vendor", "state": "dismissed", "step": 2 },
+      { "id": "RFC:JND001019XK9", "label": "Servicios Regiomontana SA", "type": "vendor", "state": "dismissed", "step": 2 },
+      { "id": "RFC:EJG120824W32", "label": "Operadora Industrial SC", "type": "vendor", "state": "dismissed", "step": 2 },
+      { "id": "RFC:IQZ9808159Y5", "label": "Soluciones Mexicana SA", "type": "vendor", "state": "dismissed", "step": 2 }
+    ],
+
+    "edges": [
+      { "from": "HJD1210074J1", "to": "RFC:YJC220607DY9", "amount": 578363.27, "date": "2024-06-23", "exhibit_id": "BNK-00116", "step": 4 },
+      { "from": "RFC:YJC220607DY9", "to": "RFC:DFZ210706QA8", "amount": 563441.34, "date": "2024-06-26", "exhibit_id": "BNK-00117", "step": 4 },
+      { "from": "RFC:DFZ210706QA8", "to": "HJD1210074J1", "amount": 548547.15, "date": "2024-07-01", "exhibit_id": "BNK-00118", "step": 5 },
+
+      { "from": "HJD1210074J1", "to": "RFC:QPC000828I19", "amount": 88705.57, "date": "2024-05-02", "exhibit_id": "BNK-00119", "step": 4 },
+      { "from": "HJD1210074J1", "to": "RFC:QPC000828I19", "amount": 95360.42, "date": "2024-05-13", "exhibit_id": "BNK-00120", "step": 4 },
+      { "from": "HJD1210074J1", "to": "RFC:QPC000828I19", "amount": 87950.53, "date": "2024-04-27", "exhibit_id": "BNK-00121", "step": 4 },
+      { "from": "HJD1210074J1", "to": "RFC:QPC000828I19", "amount": 90526.20, "date": "2024-05-12", "exhibit_id": "BNK-00122", "step": 4 },
+      { "from": "HJD1210074J1", "to": "RFC:QPC000828I19", "amount": 85376.49, "date": "2024-04-11", "exhibit_id": "BNK-00123", "step": 4 },
+
+      { "from": "HJD1210074J1", "to": "RFC:KQE030627E41", "amount": 195802.65, "date": "2024-07-22", "exhibit_id": "BNK-00124", "step": 4 },
+      { "from": "RFC:KQE030627E41", "to": "EMP:0008", "amount": 21324.54, "date": "2024-07-31", "exhibit_id": "BNK-00125", "step": 5 }
+    ],
+
+    "highlight": {
+      "accused": "RFC:YJC220607DY9",
+      "dismissed": "RFC:JND001019XK9"
+    },
+
+    "context": {
+      "RFC:YJC220607DY9": {
+        "signal": "round_tripping_ciclo_cierra_en_la_empresa",
+        "tool_calls_made": ["trace_money", "vendor", "invoices_by"],
+        "narrative": "GRUPO factura servicios de consultoría (INV-00120, $578,363.27) que se pagan a YJC220607DY9. En 9 días el dinero pasa por un segundo proveedor (DFZ210706QA8) y regresa al CLABE de la empresa: $548,547.15, el 94.8% del desembolso original, sin factura que respalde el retorno.",
+        "challenger_argument": "El movimiento entre proveedores podría ser una subcontratación legítima: el segundo proveedor prestó el servicio y le pagó a la empresa el sobrante de un anticipo. Sin embargo, no existe contrato, orden de compra ni factura que documente ese retorno, y la secuencia de fechas es exacta (9 días)."
+      },
+      "RFC:JND001019XK9": {
+        "signal": "efos_presunto_sin_materialidad_aparente",
+        "tool_calls_made": ["vendor", "support_for", "trace_money"],
+        "narrative": "El proveedor figura en la lista 69-B como presunto, pero tiene contrato vigente (CTR), órdenes de compra que respaldan cada factura y pagos únicos sin ningún retorno de fondos hacia la empresa: trace_money no encuentra ciclo.",
+        "challenger_argument": "El retador demostró que la operación se sostiene: aunque el proveedor figura en la lista 69-B como presunto, tiene contrato vigente, órdenes de compra que respaldan sus facturas y pagos únicos sin retorno de fondos. La señal del detector (listado 69-B) no alcanza para una acusación."
+      }
+    }
+  }
+}

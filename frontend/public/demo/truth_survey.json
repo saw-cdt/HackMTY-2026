@@ -1,0 +1,128 @@
+{
+ "tuning": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10
+ ],
+ "reporte": [
+  101,
+  102,
+  103,
+  104,
+  105,
+  106,
+  107,
+  108,
+  109,
+  110
+ ],
+ "rows": {
+  "1": {
+   "seed": 1,
+   "company_rfc": "ESZ971030QH7",
+   "n_schemes": 0,
+   "n_decoys": 2,
+   "scheme_types": {},
+   "peso_sembrado": 0
+  },
+  "2": {
+   "seed": 2,
+   "company_rfc": "BCC110313KT4",
+   "n_schemes": 0,
+   "n_decoys": 2,
+   "scheme_types": {},
+   "peso_sembrado": 0
+  },
+  "3": {
+   "seed": 3,
+   "company_rfc": "HSR001106X49",
+   "n_schemes": 0,
+   "n_decoys": 3,
+   "scheme_types": {},
+   "peso_sembrado": 0
+  },
+  "4": {
+   "seed": 4,
+   "company_rfc": "HJD1210074J1",
+   "n_schemes": 3,
+   "n_decoys": 4,
+   "scheme_types": {
+    "round_tripping": 1,
+    "threshold_splitting": 1,
+    "kickback": 1
+   },
+   "peso_sembrado": 1017790.9
+  },
+  "5": {
+   "seed": 5,
+   "company_rfc": "TIX1101317B7",
+   "n_schemes": 1,
+   "n_decoys": 5,
+   "scheme_types": {
+    "phantom_vendor": 1
+   },
+   "peso_sembrado": 701575.54
+  },
+  "6": {
+   "seed": 6,
+   "company_rfc": "ZSC161003QC0",
+   "n_schemes": 2,
+   "n_decoys": 5,
+   "scheme_types": {
+    "phantom_vendor": 1,
+    "revenue_inflation": 1
+   },
+   "peso_sembrado": 4159038.95
+  },
+  "7": {
+   "seed": 7,
+   "company_rfc": "KEM970302E81",
+   "n_schemes": 3,
+   "n_decoys": 5,
+   "scheme_types": {
+    "kickback": 1,
+    "threshold_splitting": 1,
+    "revenue_inflation": 1
+   },
+   "peso_sembrado": 1403665.7
+  },
+  "8": {
+   "seed": 8,
+   "company_rfc": "HLM000831MC1",
+   "n_schemes": 1,
+   "n_decoys": 2,
+   "scheme_types": {
+    "threshold_splitting": 1
+   },
+   "peso_sembrado": 362494.89
+  },
+  "9": {
+   "seed": 9,
+   "company_rfc": "OTL061225IL0",
+   "n_schemes": 1,
+   "n_decoys": 4,
+   "scheme_types": {
+    "phantom_vendor": 1
+   },
+   "peso_sembrado": 2012033.24
+  },
+  "10": {
+   "seed": 10,
+   "company_rfc": "SBN160824AN7",
+   "n_schemes": 2,
+   "n_decoys": 2,
+   "scheme_types": {
+    "threshold_splitting": 1,
+    "revenue_inflation": 1
+   },
+   "peso_sembrado": 1327000.18
+  }
+ }
+}
