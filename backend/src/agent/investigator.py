@@ -260,26 +260,34 @@ def _construir_caso(conn, scheme_type, candidate, evidence):
         # el validador reconcilia SUMANDO POR TABLA (misma regla que el
         # oficial): si cada salto del ciclo fuera su propio exhibit de
         # bank_txns, la suma de la tabla da 2-3x el monto real (cada
-        # salto trae su propio monto, decreciente). El monto que importa
-        # es el que SALIO de la empresa -- ese es el que un exhibit debe
-        # respaldar. Los demas saltos siguen en money_trail (se necesitan
-        # para el diagrama y la conectividad), pero sin exhibit_id propio:
-        # el validador solo exige que exista si no es None.
+        # salto trae su propio monto, decreciente). Un solo exhibit debe
+        # respaldar peso_amount -- y tiene que ser el ULTIMO salto (el
+        # que regresa a la empresa), no el primero: generate/schemes.py
+        # (plant_round_tripping) define el peso_amount del esquema como
+        # el monto que efectivamente vuelve, DESPUES de la comision que
+        # se queda cada intermediario -- es la prueba de que el ciclo
+        # cierra, que es justo lo que hace fraudulento al esquema (un
+        # pago de salida solo, sin retorno, no se distingue de pagarle a
+        # un proveedor normal). Los demas saltos siguen en money_trail
+        # (se necesitan para el diagrama y la conectividad), pero sin
+        # exhibit_id propio: el validador solo exige que exista si no es
+        # None.
         ruta = candidate.get("ruta", [])
-        primer_salto = ruta[0] if ruta else None
-        eid_salida = None
-        if primer_salto:
-            eid_salida = _exhibit(exhibits, "bank_txns", primer_salto["txn_id"],
-                                   f"Salida de la empresa, ${primer_salto['amount']:,.2f}, "
-                                   f"{primer_salto['date']}.")
+        ultimo_salto = ruta[-1] if ruta else None
+        eid_retorno = None
+        if ultimo_salto:
+            eid_retorno = _exhibit(exhibits, "bank_txns", ultimo_salto["txn_id"],
+                                    f"Retorno a la empresa, ${ultimo_salto['amount']:,.2f}, "
+                                    f"{ultimo_salto['date']}.")
+        n_ruta = len(ruta)
         for i, paso in enumerate(ruta):
             money_trail.append({"from": paso["from_clabe"], "to": paso["to_clabe"],
                                  "amount": paso["amount"], "date": paso["date"],
-                                 "exhibit_id": eid_salida if i == 0 else None})
+                                 "exhibit_id": eid_retorno if i == n_ruta - 1 else None})
         if evidence["invoices_emitidas"]:
             inv = evidence["invoices_emitidas"][0]
             _exhibit(exhibits, "invoices", inv["uuid"], "Factura que origino el primer pago del ciclo.")
-        peso_amount = round(primer_salto["amount"], 2) if primer_salto else 0.0
+        peso_amount = round(ultimo_salto["amount"], 2) if ultimo_salto else 0.0
 
     elif scheme_type == "threshold_splitting":
         total = 0.0
