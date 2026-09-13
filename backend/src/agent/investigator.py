@@ -257,16 +257,29 @@ def _construir_caso(conn, scheme_type, candidate, evidence):
         peso_amount = round(amount, 2)
 
     elif scheme_type == "round_tripping":
+        # el validador reconcilia SUMANDO POR TABLA (misma regla que el
+        # oficial): si cada salto del ciclo fuera su propio exhibit de
+        # bank_txns, la suma de la tabla da 2-3x el monto real (cada
+        # salto trae su propio monto, decreciente). El monto que importa
+        # es el que SALIO de la empresa -- ese es el que un exhibit debe
+        # respaldar. Los demas saltos siguen en money_trail (se necesitan
+        # para el diagrama y la conectividad), pero sin exhibit_id propio:
+        # el validador solo exige que exista si no es None.
         ruta = candidate.get("ruta", [])
+        primer_salto = ruta[0] if ruta else None
+        eid_salida = None
+        if primer_salto:
+            eid_salida = _exhibit(exhibits, "bank_txns", primer_salto["txn_id"],
+                                   f"Salida de la empresa, ${primer_salto['amount']:,.2f}, "
+                                   f"{primer_salto['date']}.")
         for i, paso in enumerate(ruta):
-            eid = _exhibit(exhibits, "bank_txns", paso["txn_id"],
-                            f"Salto {i + 1} del ciclo, ${paso['amount']:,.2f}, {paso['date']}.")
             money_trail.append({"from": paso["from_clabe"], "to": paso["to_clabe"],
-                                 "amount": paso["amount"], "date": paso["date"], "exhibit_id": eid})
+                                 "amount": paso["amount"], "date": paso["date"],
+                                 "exhibit_id": eid_salida if i == 0 else None})
         if evidence["invoices_emitidas"]:
             inv = evidence["invoices_emitidas"][0]
             _exhibit(exhibits, "invoices", inv["uuid"], "Factura que origino el primer pago del ciclo.")
-        peso_amount = round(ruta[0]["amount"], 2) if ruta else 0.0
+        peso_amount = round(primer_salto["amount"], 2) if primer_salto else 0.0
 
     elif scheme_type == "threshold_splitting":
         total = 0.0

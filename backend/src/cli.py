@@ -22,12 +22,14 @@ _SRC_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(_SRC_DIR))
 sys.path.insert(0, str(_SRC_DIR / "tools"))
 sys.path.insert(0, str(_SRC_DIR / "agent"))
+sys.path.insert(0, str(_SRC_DIR / "report"))
 
 import db
 import tools
 import investigator
 import challenger
 import validator
+import ui_block
 from llm import LLMClient
 
 DEFAULT_MODEL = "qwen2.5:7b"
@@ -54,6 +56,10 @@ def run(estate_path, out_path, model=DEFAULT_MODEL, cache_dir=None,
 
     findings = []
     leads = []
+    # paralela a `findings`: signal/tool_calls_made que ui_block.build()
+    # necesita para el contraste (ver Fase 7 / FRONTEND.md) y que ya no
+    # viven en el finding despues del Paso 4.1.
+    finding_meta = []
 
     for candidato in tools.prioritized_candidates(conn):
         kind, payload = investigator.investigate(conn, llm, candidato)
@@ -81,7 +87,19 @@ def run(estate_path, out_path, model=DEFAULT_MODEL, cache_dir=None,
         payload["challenger_argument"] = veredicto["argument"]
 
         kind2, payload2 = validator.gate(conn, payload)
-        (findings if kind2 == "finding" else leads).append(payload2)
+        if kind2 == "finding":
+            findings.append(payload2)
+            # gather_evidence no llama al modelo ni cuesta red: es la
+            # misma consulta SQL que investigator.investigate() ya hizo,
+            # repetida solo para recuperar tool_calls_made sin tener que
+            # cambiar el contrato de retorno del Paso 4.1.
+            evidencia = investigator.gather_evidence(conn, candidato)
+            finding_meta.append({
+                "signal": candidato["signal"],
+                "tool_calls_made": evidencia["tool_calls_made"],
+            })
+        else:
+            leads.append(payload2)
 
     submission = {
         "seed": seed,
@@ -101,6 +119,10 @@ def run(estate_path, out_path, model=DEFAULT_MODEL, cache_dir=None,
             "deterministic": True,
         },
     }
+
+    empresa_rfc = db.company_rfc(conn)
+    if empresa_rfc:
+        submission["ui"] = ui_block.build(conn, empresa_rfc, findings, leads, finding_meta)
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
