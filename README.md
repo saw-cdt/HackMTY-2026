@@ -93,6 +93,8 @@ plan:
 - [x] Frontend: the 4 screens from `frontend/Frontend.md` as states of a
       single app — estate drop, progressive graph, auto-opened contrast,
       searchable leads — verified with the network turned off
+- [x] Backend deployed on Vultr, running in parallel to the Mac — same
+      `submission.json` on both (see section below)
 
 ## How to run what exists
 
@@ -120,6 +122,25 @@ cd frontend
 npm install
 npm run dev
 ```
+
+## Vultr — deployed backend
+
+The backend runs the same way on a Vultr server: same code, no external
+dependencies (`backend/` is pure Python standard library).
+
+```bash
+rsync -az backend/ user@SERVER_IP:/path/forensic-auditor/
+ssh user@SERVER_IP
+cd /path/forensic-auditor
+python3 -m src.cli --estate out/estate_seedNNN.db \
+  --out out/submission_seedNNN.json --mode replay
+```
+
+Verified: same seed, same `submission.json` — `findings`,
+`leads_not_pursued`, and the `ui` block are identical between Vultr and
+local.
+
+Vultr is the parallel deployment for the sponsor category.
 
 ## The rules that don't get negotiated
 
