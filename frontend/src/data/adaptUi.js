@@ -199,11 +199,24 @@ function guessNodeFromLabel(label, nodeMap) {
 }
 
 function buildContextFor(id, model, submission) {
-  const explicit = model.context[id]
-  if (explicit) return { source: 'ui', ...explicit }
-
   const findings = submission.findings || []
   const leads = submission.leads_not_pursued || []
+
+  const explicit = model.context[id]
+  if (explicit) {
+    // ui.context (FRONTEND.md) nunca trae narrative/rule_broken -- solo
+    // signal/tool_calls_made/challenger_argument/result. Se enriquece con
+    // el finding real para que "Que mostro" no salga vacio; explicit gana
+    // si algun dia ui.context si los trae (ej. una demo escrita a mano).
+    const finding = findings.find((f) => (f.entities || []).map(entityId).includes(id))
+    return {
+      source: 'ui',
+      ...explicit,
+      narrative: explicit.narrative ?? finding?.narrative,
+      rule_broken: explicit.rule_broken ?? finding?.rule_broken,
+      peso_amount: explicit.peso_amount ?? finding?.peso_amount,
+    }
+  }
 
   const finding = findings.find((f) => (f.entities || []).map(entityId).includes(id))
   if (finding) {
@@ -244,7 +257,7 @@ export function adaptSubmission(submission) {
       model.nodes.find((n) => n.type === 'company')?.label ||
       submission.company_label ||
       'Empresa investigada',
-    companyRfc: submission.company_rfc || '',
+    companyRfc: submission.ui?.company?.rfc || submission.company_rfc || '',
     period: submission.period || '',
     runMetadata: submission.run_metadata || {},
     findings: submission.findings || [],
