@@ -28,10 +28,12 @@ _SRC_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_SRC_DIR))
 sys.path.insert(0, str(_SRC_DIR / "tools"))
 sys.path.insert(0, str(_SRC_DIR / "agent"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import db
 import tools
 import validator  # reutiliza la reconciliacion por tabla, misma tolerancia del 2%
+import results_chart  # imagen del resultado agregado (eval/harness.py), opcional
 
 SCHEME_LABELS = {
     "phantom_vendor": "Proveedor fantasma",
@@ -224,12 +226,32 @@ def _encabezado_html(conn, submission):
 """
 
 
-def _resumen_ejecutivo_html(submission):
+def _resumen_ejecutivo_html(submission, results_csv=None, results_by_type_csv=None):
+    """results_csv / results_by_type_csv: rutas opcionales a los CSV que
+    ya escribio eval/harness.py (ej. out/results_report.csv y su
+    _by_type.csv) sobre una corrida de reporte de VARIOS seeds -- no
+    tienen nada que ver con el seed de este case file en particular, se
+    embeben aparte como validacion del sistema. Si no se dan, esta
+    seccion simplemente no aparece -- nunca se inventa un resultado."""
     findings = submission.get("findings", [])
     leads = submission.get("leads_not_pursued", [])
     exposicion = sum(f.get("peso_amount", 0) for f in findings)
     n_proven = sum(1 for f in findings if f.get("confidence") == "proven")
     n_probable = sum(1 for f in findings if f.get("confidence") == "probable")
+
+    resultado_agregado_html = ""
+    if results_csv and results_by_type_csv:
+        svg = results_chart.build_results_svg(
+            results_csv, results_by_type_csv,
+            title="Validacion del sistema — seeds de reporte",
+        )
+        resultado_agregado_html = f"""
+  <h3>Validacion agregada (seeds de reporte, no este seed en particular)</h3>
+  <p>Este case file describe UN seed. La imagen de abajo es la corrida
+  de <code>eval/harness.py</code> sobre los seeds de reporte reservados
+  para medir el sistema completo -- se incluye aqui como evidencia de
+  que el pipeline esta validado, no como resultado de este caso.</p>
+  <div class="money-trail">{svg}</div>"""
 
     if findings:
         cuerpo = (
@@ -257,6 +279,7 @@ def _resumen_ejecutivo_html(submission):
     <tr><th>Exposicion total</th><td>{_fmt_money(exposicion)}</td></tr>
     <tr><th>Leads investigados y cerrados</th><td>{len(leads)}</td></tr>
   </table>
+{resultado_agregado_html}
 </section>
 """
 
@@ -468,14 +491,15 @@ footer.pie { margin-top: 3rem; font-size: 0.8rem; color: #718096; text-align: ce
 """
 
 
-def render_html(conn, submission):
-    """Ensambla el HTML completo, en el orden de case_file_structure.md."""
+def render_html(conn, submission, results_csv=None, results_by_type_csv=None):
+    """Ensambla el HTML completo, en el orden de case_file_structure.md.
+    results_csv/results_by_type_csv: opcionales, ver _resumen_ejecutivo_html."""
     partes = [
         "<!doctype html><html lang='es'><head><meta charset='utf-8'>",
         "<title>The Forensic Auditor — Case File</title>",
         f"<style>{_CSS}</style></head><body><div class='reporte'>",
         _encabezado_html(conn, submission),
-        _resumen_ejecutivo_html(submission),
+        _resumen_ejecutivo_html(submission, results_csv, results_by_type_csv),
         _hallazgos_html(conn, submission),
         _leads_html(conn, submission),
         _metodo_limites_html(),
@@ -486,13 +510,15 @@ def render_html(conn, submission):
     return "\n".join(partes)
 
 
-def build_case_file(estate_path, submission_path, out_path):
+def build_case_file(estate_path, submission_path, out_path,
+                     results_csv=None, results_by_type_csv=None):
     """Punto de entrada programatico: lee el estate y el submission.json
     ya producidos, escribe el HTML en out_path. Regresa el HTML tambien,
-    por si el llamador (eval/harness.py mas adelante) quiere inspeccionarlo."""
+    por si el llamador (eval/harness.py mas adelante) quiere inspeccionarlo.
+    results_csv/results_by_type_csv: opcionales, ver _resumen_ejecutivo_html."""
     conn = db.connect(estate_path)
     submission = json.loads(Path(submission_path).read_text(encoding="utf-8"))
-    contenido = render_html(conn, submission)
+    contenido = render_html(conn, submission, results_csv, results_by_type_csv)
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -505,9 +531,15 @@ def main():
     parser.add_argument("--estate", required=True, help="ruta al estate .db")
     parser.add_argument("--submission", required=True, help="ruta a submission.json ya producido")
     parser.add_argument("--out", required=True, help="ruta de salida para el case file .html")
+    parser.add_argument("--results-csv", default=None,
+                         help="opcional: CSV de eval/harness.py (ej. out/results_report.csv) para "
+                              "embeber la validacion agregada en el resumen ejecutivo")
+    parser.add_argument("--results-by-type-csv", default=None,
+                         help="opcional: el _by_type.csv correspondiente a --results-csv")
     args = parser.parse_args()
 
-    build_case_file(args.estate, args.submission, args.out)
+    build_case_file(args.estate, args.submission, args.out,
+                     results_csv=args.results_csv, results_by_type_csv=args.results_by_type_csv)
     print(f"OK -> {args.out}")
 
 
