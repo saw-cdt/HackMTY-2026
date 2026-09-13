@@ -414,6 +414,12 @@ def _metodo_limites_html():
   sin ver el detector que lo senalo) y un validador sin modelo (verifica
   formato y reconciliacion de pesos antes de publicar). El modelo nunca
   calcula montos ni decide si algo se publica.</p>
+  <p>El analisis se corre por linea de comandos (<code>python -m src.cli</code>);
+  no hay un endpoint ni un servidor que permita cargar un estate desde la
+  interfaz y disparar la corrida en vivo. El frontend solo puede mostrar
+  un <code>submission.json</code> ya generado de antemano -- soltar un
+  <code>.db</code> ahi no ejecuta nada, solo busca su companion ya
+  preparado.</p>
 
   <h4>Fuera de alcance en esta corrida</h4>
   <p>No generamos esquemas entrelazados en nuestro conjunto de prueba;
@@ -423,6 +429,12 @@ def _metodo_limites_html():
   <code>purchase_orders</code>; si el estate no permite inferirlo de forma
   concluyente, ese detector simplemente no corre en vez de inventar un
   numero.</p>
+  <p>El retador reconoce cuatro tipos de explicacion inocente, acotados
+  por tipo de esquema: contrato, orden de compra, una factura de retorno
+  (para kickback/round_tripping) y un cobro real via <code>bank_txns</code>
+  (para revenue_inflation). Una explicacion legitima que no encaje en
+  estos cuatro patrones -- aunque sea cierta -- el retador no la
+  reconoceria como exculpatoria.</p>
 
   <h4>Que el sistema NO puede detectar</h4>
   <p>Solo los cinco tipos de esquema del catalogo (proveedor fantasma,
@@ -430,6 +442,14 @@ def _metodo_limites_html():
   inflados). Fraude que no deje rastro en las 8 tablas del estate --
   efectivo fuera de <code>bank_txns</code>, colusion verbal, activos
   fisicos -- queda fuera del alcance de este sistema por diseno.</p>
+
+  <h4>Sobre las metricas reportadas</h4>
+  <p>Los estates de evaluacion (seeds de tuning y de reporte) los genera
+  nuestro propio generador (<code>generate/</code>), no un dataset
+  independiente o de un tercero. El 100% de recall reportado mide
+  consistencia interna -- que el sistema encuentra lo que su propio
+  generador sembro, bajo su propia definicion de cada esquema -- no una
+  validacion externa contra fraude real o casos de otro origen.</p>
 
   <h4>Reproducibilidad</h4>
   <p>Desde <code>backend/</code>, con el mismo seed:</p>
