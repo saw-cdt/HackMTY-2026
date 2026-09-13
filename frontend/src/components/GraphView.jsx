@@ -3,6 +3,15 @@ import { formatMxn } from '../data/format'
 const VIEW_W = 900
 const VIEW_H = 584
 
+// Cuanto se retarda la aparicion de un nodo respecto al de antes, DENTRO
+// del mismo paso -- para que no salgan los 2-3 nodos de un paso todos en
+// el mismo instante. 50ms cae en el rango pedido (40-60ms).
+const NODE_STAGGER_MS = 50
+// Cuanto tarda la etiqueta del monto en aparecer despues de que la
+// arista termino de dibujarse (coincide con la duracion del trazo).
+const EDGE_DRAW_MS = 400
+const EDGE_DRAW_CLIMAX_MS = 750
+
 const STATE_COLOR_VAR = {
   neutral: 'var(--state-neutral)',
   dismissed: 'var(--state-dismissed)',
@@ -71,10 +80,26 @@ function amountLabelWidth(text) {
   return Math.max(34, text.length * 6.4)
 }
 
+// Retardo de entrada por nodo: los que comparten "step" no aparecen
+// todos en el mismo instante, sino uno tras otro (ver NODE_STAGGER_MS).
+// El orden depende del orden de `nodes` (ya estable desde el adaptador),
+// no de nada aleatorio -- la misma corrida siempre anima igual.
+function staggerDelaysFor(nodes) {
+  const seen = new Map()
+  const delays = new Map()
+  nodes.forEach((n) => {
+    const i = seen.get(n.step) || 0
+    delays.set(n.id, i * NODE_STAGGER_MS)
+    seen.set(n.step, i + 1)
+  })
+  return delays
+}
+
 export default function GraphView({ model, step, onSelectNode, selectedId }) {
   const { nodes, edges, maxStep, companyId } = model
   const company = nodes.find((n) => n.id === companyId)
   const laneOffsets = laneOffsetsFor(edges)
+  const staggerDelays = staggerDelaysFor(nodes)
 
   return (
     <div className="card graph-card">
@@ -112,13 +137,31 @@ export default function GraphView({ model, step, onSelectNode, selectedId }) {
               company?.y ?? 292,
               laneOffsets.get(edge.id) ?? 0
             )
+            const isClimax = edge.step >= maxStep
+            const drawMs = isClimax ? EDGE_DRAW_CLIMAX_MS : EDGE_DRAW_MS
             const amountText = edge.amount != null ? formatMxn(edge.amount) : null
             const labelW = amountText ? amountLabelWidth(amountText) : 0
             return (
               <g key={edge.id} style={{ opacity: visible ? 1 : 0 }}>
-                <path className="graph-edge-path" d={d} style={{ stroke: color }} markerEnd="url(#arrow)" />
-                {visible && amountText && (
-                  <g>
+                {/* pathLength="1" normaliza el largo real de la curva a 1
+                    unidad, para poder animar el trazo (origen -> destino)
+                    con dasharray/dashoffset sin medir la geometria. */}
+                <path
+                  className={`graph-edge-path${isClimax ? ' is-climax' : ''}`}
+                  d={d}
+                  pathLength="1"
+                  style={{
+                    stroke: color,
+                    strokeDasharray: 1,
+                    strokeDashoffset: visible ? 0 : 1,
+                  }}
+                  markerEnd="url(#arrow)"
+                />
+                {amountText && (
+                  <g
+                    className="graph-edge-label"
+                    style={{ opacity: visible ? 1 : 0, transitionDelay: visible ? `${drawMs}ms` : '0ms' }}
+                  >
                     <rect
                       x={labelX - labelW / 2}
                       y={labelY - 12}
@@ -149,11 +192,20 @@ export default function GraphView({ model, step, onSelectNode, selectedId }) {
             const r = isCompany ? 30 : 18
             const isSelected = selectedId === node.id
             const labelAbove = node.y < (company?.y ?? 292)
+            const isClimax = node.step >= maxStep && !isCompany
+            const delay = staggerDelays.get(node.id) ?? 0
 
             return (
               <g
                 key={node.id}
-                style={{ opacity: visible ? 1 : 0.08, cursor: visible ? 'pointer' : 'default' }}
+                className={`graph-node-group${isClimax ? ' is-climax' : ''}`}
+                style={{
+                  opacity: visible ? 1 : 0,
+                  transform: visible ? 'scale(1)' : 'scale(0)',
+                  transformOrigin: `${node.x}px ${node.y}px`,
+                  transitionDelay: visible ? `${delay}ms` : '0ms',
+                  cursor: visible ? 'pointer' : 'default',
+                }}
                 onClick={() => visible && onSelectNode(node.id)}
               >
                 <circle
@@ -171,6 +223,7 @@ export default function GraphView({ model, step, onSelectNode, selectedId }) {
                   x={node.x}
                   y={node.y + 4}
                   textAnchor="middle"
+                  className="graph-node-glyph"
                   style={{ fontSize: isCompany ? 11 : 9, fill: isCompany ? '#fff' : STATE_COLOR_VAR[vState], fontWeight: 700 }}
                 >
                   {isCompany ? '🏢' : node.type === 'employee' ? 'EMP' : 'PROV'}

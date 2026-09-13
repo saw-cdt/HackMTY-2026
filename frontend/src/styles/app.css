@@ -505,13 +505,38 @@ button {
 
 .graph-node-circle {
   cursor: pointer;
-  transition: opacity 0.4s ease, r 0.2s ease;
+  transition: opacity 0.4s ease, r 0.2s ease, fill 0.4s ease, stroke 0.4s ease;
+}
+
+.graph-node-group {
+  transition: opacity 600ms ease-out, transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* el paso 6 (la revelacion del destino) es el climax: mas lento y con
+   un leve "sobresalto" al asentar, no solo mas largo */
+.graph-node-group.is-climax {
+  transition-duration: 900ms;
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.graph-node-label,
+.graph-node-sublabel,
+.graph-node-glyph {
+  transition: fill 0.4s ease;
 }
 
 .graph-edge-path {
   fill: none;
   stroke-width: 1.6;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.4s ease, stroke 0.4s ease, stroke-dashoffset 400ms ease-out;
+}
+
+.graph-edge-path.is-climax {
+  transition-duration: 0.4s, 0.4s, 750ms;
+}
+
+.graph-edge-label {
+  transition: opacity 0.35s ease;
 }
 
 /* ---------- Contraste ---------- */
