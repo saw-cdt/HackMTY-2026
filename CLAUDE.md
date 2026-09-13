@@ -61,9 +61,9 @@ Estas se le dicen una vez al inicio y se repiten si se desvía:
 
 ## Estado actual
 
-*Última actualización: 2026-09-12. Si retomas después de que se llenó la
-ventana de contexto o se compactó la conversación, lee esto primero —
-te ahorra rehacer trabajo ya hecho y verificado.*
+*Última actualización: 2026-09-12 (tarde). Si retomas después de que se
+llenó la ventana de contexto o se compactó la conversación, lee esto
+primero — te ahorra rehacer trabajo ya hecho y verificado.*
 
 **Todo el código vive bajo `backend/`, no en la raíz del repo.** Cuando
 un paso de abajo dice `src/algo.py` o `eval/algo.py`, en realidad es
@@ -84,7 +84,17 @@ Progreso, paso por paso:
   - Esto obligó a un ajuste retroactivo en `estate.py`/`schemes.py`: los aprobadores de `purchase_orders` ya no se asignan al azar. Hay 3 niveles reales (coordinador/gerente/director, 2-3 personas cada uno) con techo de autoridad (`approval_threshold`, `approval_threshold*5`, sin techo), elegidos una vez por seed antes de generar ninguna OC. Sin esto, agrupar por approver era ruido puro.
   - `trace_money` y el detector de `round_tripping` exigen causalidad temporal entre saltos (`b.date >= a.date`) — sin esto, un salto podía "viajar al pasado" usando una transferencia vieja sin relación.
   - Verificado: barrido de 40 seeds, recall 100% en los 5 detectores. `check-isolation` pasa.
-- [ ] **← Empieza aquí: Paso 4.1** (`backend/src/agent/investigator.py`). Nada de `agent/`, `report/`, `eval/harness.py` ni `cli.py` real existe todavía — solo el stub de `cli.py` que lanza `NotImplementedError`.
+- [x] **Paso 4.1** — `backend/src/agent/investigator.py`. Recibe un candidato, consulta herramientas, y hace 2 llamadas cortas al modelo (decisión hallazgo/cerrar; redacción). `peso_amount`, `exhibits`, `entities`, `money_trail` se arman en código, nunca el modelo.
+  - Enriquecí los candidatos de `round_tripping` en `detectors.py` con la ruta completa (montos/fechas/CLABEs), no solo `txn_id` — el investigador no tenía forma de citar un `bank_txn` por id con las 8 herramientas.
+  - `threshold_splitting` y `revenue_inflation` no traían `money_trail` al principio (el validador oficial lo marca como error de formato, no solo advertencia). Corregido: ahora los 5 tipos de esquema pasan `validate_format.py --estate` limpio.
+  - El modelo local (qwen2.5:7b) necesitó 2 rondas de ajuste de prompt: primero inventaba un artículo legal genérico en vez de citar 69-B; luego daba razones de cierre vagas ("evidencia insuficiente") pese a tener los datos correctos — se resolvió exigiendo que la primera frase cite los números exactos (contratos, OC) antes de razonar.
+  - Verificado: `phantom_vendor` sembrado → arma hallazgo (monto exacto); decoy 1 → cierra. Los 5 tipos de esquema probados individualmente, todos pasan el validador oficial.
+- [x] **Paso 4.2** — `backend/src/agent/challenger.py`. Recibe el hallazgo en borrador, vuelve a consultar el estate por su cuenta (nunca confía solo en lo que el investigador citó), nunca ve el candidato original ni su `signal`.
+  - El campo `survives` fue el problema real de este paso: pedirle al modelo el booleano directo lo invertía con frecuencia (argumento correcto, polaridad al revés, en ambas direcciones, en pruebas distintas). Se resolvió pidiéndole una palabra sin ambigüedad de sentido (`queda_explicado` / `sigue_pareciendo_fraude`) y traduciéndola en código.
+  - Aun así, con los 3 hechos en "NO" el modelo a veces decía `queda_explicado` sin base. Como esos hechos (contrato, OC, reciprocidad real) ya se calculan con certeza en código, se agregó una red de seguridad: si ninguno existe, `survives` se fuerza a `true` sin importar al modelo.
+  - **Se encontró un hueco real en esa red de seguridad**: el decoy 2 (empleado y proveedor en el mismo banco, sin transferencia entre ellos) no tiene contrato, OC, ni reciprocidad — caía como falsa acusación. Se agregó un **4º hecho, verificado en código antes de llamar al modelo**: si el hallazgo acusa a 2+ entidades de estar vinculadas por dinero, ¿existe una transferencia directa entre sus CLABEs en `bank_txns`? Si no, se tumba ahí mismo — nunca se consulta al modelo, porque es una contradicción factual, no de criterio.
+  - Verificado: los 5 decoys armados como hallazgos fabricados, los 5 caen. Decoy 2 cae por código (nunca llama al modelo); los otros 4 caen por el modelo usando la tabla de hechos.
+- [ ] **← Empieza aquí: Paso 4.3** (`backend/src/agent/validator.py`, SIN modelo). Nada de `report/`, `eval/harness.py` ni `cli.py` real existe todavía — solo el stub de `cli.py` que lanza `NotImplementedError`.
 
 Historial completo en `git log --oneline` (rama `main`); cada commit
 describe qué paso o fix cubre, en español.

@@ -108,6 +108,7 @@ def detect_round_tripping(conn, max_hops=4):
         ).fetchall()
     }
 
+    edge_by_txn = {e["txn_id"]: e for e in edges}
     candidatos = []
     ciclos_vistos = set()
 
@@ -126,11 +127,17 @@ def detect_round_tripping(conn, max_hops=4):
                 key = tuple(ruta_txns)
                 if rfcs_intermedios and key not in ciclos_vistos:
                     ciclos_vistos.add(key)
+                    # la ruta completa (montos, fechas, clabes) va en cada
+                    # candidato: el investigador no tiene forma de pedir
+                    # "dame el bank_txn X" con las 8 herramientas, asi que
+                    # se la damos de una vez.
+                    ruta = [edge_by_txn[t] for t in ruta_txns]
                     for rfc in rfcs_intermedios:
                         candidatos.append({
                             "rfc": rfc,
                             "signal": "round_tripping_ciclo_a_empresa",
                             "txn_ids": ruta_txns,
+                            "ruta": ruta,
                             "saltos": len(ruta_txns),
                         })
             else:
