@@ -7,3 +7,9 @@ node_modules/
 .env
 frontend/dist/
 frontend/.vite/
+
+# Artefactos generados por eval/harness.py (estates, truth, submissions,
+# cache de prompts, tablas de resultados) -- regenerables por seed,
+# nunca a mano. Solo .gitkeep se versiona.
+backend/out/*
+!backend/out/.gitkeep
