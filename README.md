@@ -86,6 +86,8 @@ por fase). Todo lo de abajo está construido y corrido de verdad, no es plan:
 - [x] Frontend: las 4 pantallas de `frontend/Frontend.md` como estados de
       una sola app — drop del estate, grafo progresivo, contraste
       auto-abierto, leads con búsqueda — verificado con conexión apagada
+- [x] Backend desplegado en Vultr, corriendo en paralelo a la Mac —
+      mismo `submission.json` en ambos (ver sección abajo)
 
 ## Cómo correr lo que existe
 
@@ -113,6 +115,24 @@ cd frontend
 npm install
 npm run dev
 ```
+
+## Vultr — backend desplegado
+
+El backend corre igual en un servidor de Vultr: mismo código, sin
+dependencias externas (`backend/` es solo librería estándar de Python).
+
+```bash
+rsync -az backend/ usuario@IP_DEL_SERVIDOR:/ruta/forensic-auditor/
+ssh usuario@IP_DEL_SERVIDOR
+cd /ruta/forensic-auditor
+python3 -m src.cli --estate out/estate_seedNNN.db \
+  --out out/submission_seedNNN.json --mode replay
+```
+
+Verificado: mismo seed, mismo `submission.json` — `findings`,
+`leads_not_pursued` y el bloque `ui` idénticos entre Vultr y local.
+
+Vultr es el despliegue paralelo para la categoría del patrocinador.
 
 ## Las reglas que no se negocian
 
