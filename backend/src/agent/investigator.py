@@ -224,12 +224,22 @@ def _construir_caso(conn, scheme_type, candidate, evidence):
                       f"Estatus {vendor['efos_status']} en la lista 69-B, "
                       f"publicado {vendor.get('efos_publication_date')}.")
         total = 0.0
+        # Cada factura es un pago INDEPENDIENTE (no una cadena de saltos):
+        # todas se citan como exhibit para que peso_amount reconcilie, pero
+        # money_trail solo lleva un paso representativo -- si se agregara
+        # uno por factura, "destino del paso == origen del siguiente" (la
+        # regla de conectividad del validador) fallaria, porque todas
+        # empiezan en EMPRESA, no continuan una de la otra.
+        primer_eid = None
         for inv in evidence["invoices_emitidas"]:
             eid = _exhibit(exhibits, "invoices", inv["uuid"],
                             f"Factura sin contrato ni orden de compra que la respalde, ${inv['total']:,.2f}.")
             total += inv["total"]
-            money_trail.append({"from": "EMPRESA", "to": f"RFC:{rfc}", "amount": inv["total"],
-                                 "date": inv["issue_date"], "exhibit_id": eid})
+            if primer_eid is None:
+                primer_eid, primera_fecha, primer_monto = eid, inv["issue_date"], inv["total"]
+        if primer_eid:
+            money_trail.append({"from": "EMPRESA", "to": f"RFC:{rfc}", "amount": primer_monto,
+                                 "date": primera_fecha, "exhibit_id": primer_eid})
         peso_amount = round(total, 2)
 
     elif scheme_type == "kickback":
@@ -260,6 +270,7 @@ def _construir_caso(conn, scheme_type, candidate, evidence):
 
     elif scheme_type == "threshold_splitting":
         total = 0.0
+        primer_eid = None
         for uuid_ in candidate.get("invoice_ids", []):
             inv = next((i for i in evidence["invoices_emitidas"] if i["uuid"] == uuid_), None)
             if inv is None:
@@ -267,9 +278,14 @@ def _construir_caso(conn, scheme_type, candidate, evidence):
             eid = _exhibit(exhibits, "invoices", inv["uuid"],
                             f"${inv['total']:,.2f}, justo debajo del umbral inferido "
                             f"(${candidate.get('umbral_inferido', 0):,.2f}).")
-            money_trail.append({"from": "EMPRESA", "to": f"RFC:{rfc}", "amount": inv["total"],
-                                 "date": inv["issue_date"], "exhibit_id": eid})
             total += inv["total"]
+            # mismo motivo que en phantom_vendor: son facturas paralelas,
+            # no una cadena -- un solo paso representativo en money_trail.
+            if primer_eid is None:
+                primer_eid, primera_fecha, primer_monto = eid, inv["issue_date"], inv["total"]
+        if primer_eid:
+            money_trail.append({"from": "EMPRESA", "to": f"RFC:{rfc}", "amount": primer_monto,
+                                 "date": primera_fecha, "exhibit_id": primer_eid})
         peso_amount = round(total, 2)
 
     elif scheme_type == "revenue_inflation":

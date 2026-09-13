@@ -8,9 +8,14 @@ Modo "record": si el prompt no está en caché, llama a Ollama y guarda la
 respuesta. Modo "replay": nunca llama a Ollama, solo lee el caché -> permite
 reproducir una corrida con la conexión apagada.
 
-Los contadores solo se mueven en una llamada real a Ollama. Un cache-hit
-es instantáneo y no cuenta, porque lo que miden es cuánto costó/tardó
-hablar con el modelo, no cuántas veces se le preguntó algo.
+llm_calls / wall_clock_seconds solo se mueven en una llamada real a
+Ollama: miden cuánto costó/tardó esta corrida en particular, y un
+cache-hit es instantáneo y gratis, así que no cuenta. logical_calls es
+distinto: cuenta CADA vez que el agente le pidió algo al modelo, venga
+de la red o del caché -- mide el trabajo de la investigación, no el
+costo de esta corrida. Correr la misma investigación dos veces (la
+segunda toda en caché) da el mismo logical_calls ambas veces, aunque
+llm_calls baje a 0 y wall_clock_seconds a ~0 en la segunda.
 """
 import hashlib
 import json
@@ -43,13 +48,18 @@ class LLMClient:
 
         self.llm_calls = 0
         self.wall_clock_seconds = 0.0
+        self.logical_calls = 0
 
     def chat(self, prompt, system=None):
         """Devuelve la respuesta de texto del modelo para `prompt`.
 
         Un cache-hit no toca llm_calls ni wall_clock_seconds: esos
-        contadores miden llamadas reales a Ollama.
+        contadores miden llamadas reales a Ollama. logical_calls SI se
+        mueve siempre -- es el contador que se reporta como
+        run_metadata.llm_calls en submission.json, precisamente para que
+        no dependa de si el caché ya tenia la respuesta.
         """
+        self.logical_calls += 1
         key = self._cache_key(prompt, system)
         path = self._cache_path(key)
 
