@@ -1,18 +1,19 @@
 import BrandMark from './BrandMark'
+import { t } from '../i18n/strings'
 
-const STAGES = [
-  { key: 'running', label: 'Corriendo' },
-  { key: 'result', label: 'Resultado' },
-]
+export default function Sidebar({ view, onNavigate, appState, onReset, leadsCount, lang }) {
+  const STAGES = [
+    { key: 'running', label: t(lang, 'stageRunning') },
+    { key: 'result', label: t(lang, 'stageResult') },
+  ]
 
-export default function Sidebar({ view, onNavigate, appState, onReset, leadsCount }) {
   return (
     <aside className="sidebar">
       <div className="brand">
         <BrandMark />
         <div>
-          <div className="brand-name">Forensic Auditor</div>
-          <div className="brand-sub">HackMTY 2026</div>
+          <div className="brand-name">{t(lang, 'brandName')}</div>
+          <div className="brand-sub">{t(lang, 'brandSub')}</div>
         </div>
       </div>
 
@@ -23,7 +24,7 @@ export default function Sidebar({ view, onNavigate, appState, onReset, leadsCoun
           onClick={() => onNavigate('audit')}
         >
           <span className="dot" />
-          Auditoría
+          {t(lang, 'navAudit')}
         </button>
         <button
           type="button"
@@ -31,7 +32,8 @@ export default function Sidebar({ view, onNavigate, appState, onReset, leadsCoun
           onClick={() => onNavigate('leads')}
         >
           <span className="dot" />
-          Leads descartados{leadsCount ? ` (${leadsCount})` : ''}
+          {t(lang, 'leadsTitle')}
+          {leadsCount ? ` (${leadsCount})` : ''}
         </button>
       </nav>
 
@@ -53,7 +55,7 @@ export default function Sidebar({ view, onNavigate, appState, onReset, leadsCoun
           })}
         </div>
         <button type="button" className="btn btn-ghost" onClick={onReset}>
-          ↺ Nueva corrida
+          {t(lang, 'newRun')}
         </button>
       </div>
     </aside>

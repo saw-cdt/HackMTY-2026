@@ -1,11 +1,18 @@
+import { t, schemeLabel, localizeResult } from '../i18n/strings'
+
 function findNode(model, id) {
   return model.nodes.find((n) => n.id === id)
 }
 
-function Column({ kind, node, ctx }) {
-  const title = kind === 'accused' ? 'Acusado' : 'Descartado'
-  const resultText =
-    ctx?.result || (kind === 'accused' ? 'ACUSACIÓN' : 'Cerrado por challenger')
+// El contenido de fondo (narrativa, argumento, señal) lo redacta el
+// agente siempre en español -- no se traduce al vuelo, solo la interfaz.
+function Column({ kind, node, ctx, lang }) {
+  const title = kind === 'accused' ? t(lang, 'colAccused') : t(lang, 'colDismissed')
+  const resultText = localizeResult(lang, ctx?.result, kind)
+
+  const signalDisplay = schemeLabel(lang, ctx?.signal) || ctx?.signal
+  const whatShowed = ctx?.narrative || ctx?.rule_broken
+  const argument = ctx?.challenger_argument
 
   return (
     <div className="contrast-card">
@@ -15,17 +22,17 @@ function Column({ kind, node, ctx }) {
       </div>
       <div className="contrast-body">
         <div className="contrast-row">
-          <div className="contrast-row-label">Señal que lo marcó</div>
-          <div className="contrast-row-value">{ctx?.signal || '—'}</div>
+          <div className="contrast-row-label">{t(lang, 'rowSignal')}</div>
+          <div className="contrast-row-value">{signalDisplay || '—'}</div>
         </div>
         <div className="contrast-row">
-          <div className="contrast-row-label">Herramientas consultadas</div>
+          <div className="contrast-row-label">{t(lang, 'rowTools')}</div>
           <div className="contrast-row-value">
             {ctx?.tool_calls_made?.length ? (
               <div className="tool-pill-row">
-                {ctx.tool_calls_made.map((t) => (
-                  <span className="tool-pill" key={t}>
-                    {t}
+                {ctx.tool_calls_made.map((call) => (
+                  <span className="tool-pill" key={call}>
+                    {call}
                   </span>
                 ))}
               </div>
@@ -35,15 +42,15 @@ function Column({ kind, node, ctx }) {
           </div>
         </div>
         <div className="contrast-row">
-          <div className="contrast-row-label">Qué mostró</div>
-          <div className="contrast-row-value">{ctx?.narrative || ctx?.rule_broken || '—'}</div>
+          <div className="contrast-row-label">{t(lang, 'rowWhatShowed')}</div>
+          <div className="contrast-row-value">{whatShowed || '—'}</div>
         </div>
         <div className="contrast-row">
-          <div className="contrast-row-label">Retador argumentó</div>
-          <div className="contrast-row-value">{ctx?.challenger_argument || '—'}</div>
+          <div className="contrast-row-label">{t(lang, 'rowChallengerArgued')}</div>
+          <div className="contrast-row-value">{argument || '—'}</div>
         </div>
         <div className="contrast-row">
-          <div className="contrast-row-label">Resultado</div>
+          <div className="contrast-row-label">{t(lang, 'rowResult')}</div>
           <div className="contrast-row-value" style={{ fontWeight: 700 }}>
             {resultText}
           </div>
@@ -53,7 +60,7 @@ function Column({ kind, node, ctx }) {
   )
 }
 
-export default function ContrastPanel({ model }) {
+export default function ContrastPanel({ model, lang }) {
   const accusedId = model.highlight.accused
   const dismissedId = model.highlight.dismissed
   if (!accusedId && !dismissedId) return null
@@ -65,13 +72,11 @@ export default function ContrastPanel({ model }) {
 
   return (
     <div>
-      <h2 className="section-title">El contraste</h2>
-      <p className="section-sub">
-        La misma pregunta, dos respuestas: por qué a uno se le acusa y al otro se le cerró el caso.
-      </p>
+      <h2 className="section-title">{t(lang, 'contrastTitle')}</h2>
+      <p className="section-sub">{t(lang, 'contrastSub')}</p>
       <div className="contrast-grid">
-        <Column kind="accused" node={accusedNode} ctx={accusedCtx} />
-        <Column kind="dismissed" node={dismissedNode} ctx={dismissedCtx} />
+        <Column kind="accused" node={accusedNode} ctx={accusedCtx} lang={lang} />
+        <Column kind="dismissed" node={dismissedNode} ctx={dismissedCtx} lang={lang} />
       </div>
     </div>
   )

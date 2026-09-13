@@ -1,33 +1,34 @@
 import { formatMxn, formatNumber, formatSeconds } from '../data/format'
+import { t } from '../i18n/strings'
 
-export default function StatCards({ runMetadata }) {
+export default function StatCards({ runMetadata, lang }) {
   const cards = [
     {
       key: 'llm_calls',
-      label: 'Llamadas al modelo',
+      label: t(lang, 'statLlmCalls'),
       value: formatNumber(runMetadata.llm_calls),
       icon: '🧠',
       bg: 'var(--accent-soft)',
       color: 'var(--accent-strong)',
-      hint: runMetadata.model || 'Ollama local',
+      hint: runMetadata.model || t(lang, 'statOllamaLocal'),
     },
     {
       key: 'mxn_cost',
-      label: 'Costo',
+      label: t(lang, 'statCost'),
       value: formatMxn(runMetadata.mxn_cost ?? 0),
       icon: '💳',
       bg: 'var(--state-dismissed-soft)',
       color: 'var(--state-dismissed)',
-      hint: 'Modelo local, sin API externa',
+      hint: t(lang, 'statNoExternalApi'),
     },
     {
       key: 'wall_clock_seconds',
-      label: 'Tiempo total',
+      label: t(lang, 'statTime'),
       value: formatSeconds(runMetadata.wall_clock_seconds),
       icon: '⏱',
       bg: 'var(--state-flagged-soft)',
       color: 'var(--state-flagged)',
-      hint: runMetadata.deterministic ? 'Corrida determinista' : 'Corrida no determinista',
+      hint: runMetadata.deterministic ? t(lang, 'statDeterministic') : t(lang, 'statNonDeterministic'),
     },
   ]
 

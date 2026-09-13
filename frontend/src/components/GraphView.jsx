@@ -1,4 +1,5 @@
 import { formatMxn } from '../data/format'
+import { t, stateLabel } from '../i18n/strings'
 
 const VIEW_W = 900
 const VIEW_H = 584
@@ -95,7 +96,7 @@ function staggerDelaysFor(nodes) {
   return delays
 }
 
-export default function GraphView({ model, step, onSelectNode, selectedId }) {
+export default function GraphView({ model, step, onSelectNode, selectedId, lang }) {
   const { nodes, edges, maxStep, companyId } = model
   const company = nodes.find((n) => n.id === companyId)
   const laneOffsets = laneOffsetsFor(edges)
@@ -107,18 +108,13 @@ export default function GraphView({ model, step, onSelectNode, selectedId }) {
         {['neutral', 'dismissed', 'flagged', 'accused'].map((s) => (
           <span className="graph-legend-item" key={s}>
             <span className="graph-legend-swatch" style={{ background: STATE_COLOR_VAR[s] }} />
-            {{
-              neutral: 'Sin evaluar',
-              dismissed: 'Descartado',
-              flagged: 'Candidato',
-              accused: 'Hallazgo',
-            }[s]}
+            {stateLabel(lang, s)}
           </span>
         ))}
       </div>
 
       <div className="graph-svg-wrap">
-        <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} width="100%" role="img" aria-label="Grafo de la investigación">
+        <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} width="100%" role="img" aria-label={t(lang, 'graphAriaLabel')}>
           {edges.map((edge) => {
             const visible = edge.step <= step
             const from = nodes.find((n) => n.id === edge.from)
