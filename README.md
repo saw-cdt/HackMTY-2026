@@ -1,110 +1,117 @@
 # The Forensic Auditor — HackMTY 2026 (Infosys)
 
-Agente que investiga fraude de facturación en México sobre el schema y las
-reglas oficiales del track. Cada acusación pasa por tres roles antes de
-imprimirse:
+Agent that investigates invoice fraud in Mexico against the track's official
+schema and rules. Every accusation goes through three roles before it gets
+printed:
 
 ```
-Investigador  arma el hallazgo (hipótesis + evidencia)
-Retador       intenta tumbarlo con la explicación inocente más fuerte posible
-Validador     código, sin modelo: cita, reconcilia montos al 2%, cuenta exhibits
+Investigator  builds the finding (hypothesis + evidence)
+Challenger    tries to knock it down with the strongest innocent explanation
+Validator     code, no model: cites, reconciles amounts within 2%, counts exhibits
 ```
 
-Lo que sobrevive se publica con su prueba. Lo que no, se documenta como
-`lead_not_pursued` con quién lo cerró y por qué.
+What survives gets published with its proof. What doesn't gets documented as
+a `lead_not_pursued`, with who closed it and why.
 
-> Ningún hallazgo se imprime sin haber sido atacado.
-> Si una tarea no sirve a esa frase, se corta.
+> No finding gets printed without having been attacked.
+> If a task doesn't serve that sentence, it gets cut.
 
-## Formato oficial
+## Official format
 
-El estate del jurado es un **SQLite `.db`** con 8 tablas fijas (`vendors`,
+The jury's estate is a **SQLite `.db`** with 8 fixed tables (`vendors`,
 `invoices`, `ledger`, `bank_txns`, `purchase_orders`, `contracts`,
-`employees`, `efos_list`) y la salida es `submission.json` (`findings[]` +
-`leads_not_pursued[]` + `run_metadata`) más un `case_file.html`. Los cinco
-tipos de esquema son un enum fijo: `phantom_vendor`, `kickback`,
+`employees`, `efos_list`) and the output is `submission.json` (`findings[]` +
+`leads_not_pursued[]` + `run_metadata`) plus a `case_file.html`. The five
+scheme types are a fixed enum: `phantom_vendor`, `kickback`,
 `round_tripping`, `threshold_splitting`, `revenue_inflation`.
 
-El ground truth vive aparte, en un JSON que el agente nunca abre. Regla dura:
-la palabra `ground_truth` solo puede aparecer en `backend/src/generate/` (el
-generador) y en `eval/` (el harness de métrica) — nunca en `tools/` ni en
-`agent/`. Si aparece en cualquier otro lado, la calificación topa en 2 sin
-importar los números.
+The ground truth lives separately, in a JSON the agent never opens. Hard
+rule: the word `ground_truth` may only appear under `backend/src/generate/`
+(the generator) and `eval/` (the metric harness) — never in `tools/` or
+`agent/`. If it shows up anywhere else, the score caps at 2 no matter the
+numbers.
 
-## Estructura
+## Structure
 
 ```
 backend/
   src/
-    generate/   generador del estate + ground truth (único lugar,
-                 junto con eval/, donde puede aparecer "ground_truth")
-    tools/      las 8 herramientas SQL + los 5 detectores sobre el estate
-    agent/      investigador (4.1), retador (4.2), validador (4.3)
-    report/     case_file.py (HTML autocontenido), ui_block.py (bloque `ui`
-                para el frontend), results_chart.py (imagen de la tabla
-                101-110 para la diapositiva)
-    cli.py      entrypoint real; investigador -> retador -> validador por
-                cada candidato, escribe submission.json (+ bloque `ui`)
-    llm.py      envoltorio del modelo: Ollama local por default, Gemini
-                como respaldo (--backend gemini / MODEL_BACKEND=gemini),
-                temperatura 0, caché por sha256, modo replay sin red
-  eval/         harness de métrica (recall, falsas acusaciones, CSV por seed)
-  out/          estates generados, ground truths, submission.json (gitignored)
-  Makefile      check-format (corre validate_format.py) y check-isolation
-                (falla si "ground_truth" se filtra fuera de generate/)
-  validate_format.py   validador oficial de formato (verbatim, sin tocar)
+    generate/   estate + ground truth generator (the only place, along with
+                eval/, where "ground_truth" is allowed to appear)
+    tools/      the 8 SQL tools + the 5 detectors over the estate
+    agent/      investigator (4.1), challenger (4.2), validator (4.3)
+    report/     case_file.py (self-contained HTML), ui_block.py (the `ui`
+                block for the frontend), results_chart.py (the 101-110
+                results-table image for the slide)
+    cli.py      real entrypoint; investigator -> challenger -> validator per
+                candidate, writes submission.json (+ the `ui` block)
+    llm.py      model wrapper: local Ollama by default, Gemini as a real
+                fallback (--backend gemini / MODEL_BACKEND=gemini), with
+                automatic retry on rate-limit (429) and temporary API
+                overload (503), sha256 prompt cache, network-free replay mode
+  eval/         metric harness (recall, false accusations, per-seed CSV)
+  out/          generated estates, ground truths, submission.json (gitignored)
+  Makefile      check-format (runs validate_format.py) and check-isolation
+                (fails if "ground_truth" leaks outside generate/)
+  validate_format.py   official format validator (verbatim, untouched)
 frontend/
-  src/          Vite + React — 4 estados de una sola app (no rutas):
-                reposo (DropZone) -> corriendo (GraphView, revelado por
-                step) -> resultado (StatCards + ContrastPanel auto-abierto)
-                -> leads (LeadsList con búsqueda). Grafo SVG a mano,
-                posiciones fijas, sin librerías externas ni CDN.
+  src/          Vite + React — 4 states of a single app (no routes):
+                idle (DropZone) -> running (GraphView, revealed step by
+                step) -> result (StatCards + auto-opened ContrastPanel)
+                -> leads (LeadsList with search). Hand-drawn SVG graph,
+                fixed positions, no external libraries or CDN.
 ```
 
-`backend/src/generate/schema.sql` es copia byte-idéntica de
-`estate_schema.sql` — nombres de columna sin traducir ni renombrar, porque
-los jueces los leen directo y cada exhibit cita un `source_table` por nombre.
+`backend/src/generate/schema.sql` is a byte-identical copy of
+`estate_schema.sql` — column names are neither translated nor renamed,
+because the judges read them directly and every exhibit cites a
+`source_table` by name.
 
-## Estado actual
+## Current status
 
-Pipeline completo, extremo a extremo (ver `CLAUDE.md` para el detalle fase
-por fase). Todo lo de abajo está construido y corrido de verdad, no es plan:
+Full end-to-end pipeline (see `CLAUDE.md` for the phase-by-phase detail).
+Everything below is actually built and has actually been run — it's not a
+plan:
 
-- [x] Generador del estate + ground truth por seed (`generate/`), incluida
-      la población limpia sin falsos positivos (`enforce_clean_population`)
-- [x] Las 8 herramientas SQL + los 5 detectores (`tools/`)
-- [x] Investigador / Retador / Validador (`agent/`) — Fases 4.1-4.3
-- [x] `cli.py` conecta el ciclo completo y escribe `submission.json` real,
-      incluido el bloque `ui` (`report/ui_block.py`) que consume el frontend
-- [x] `case_file.py` — HTML autocontenido con las 5 secciones oficiales,
-      SVG del money trail dibujado en código
-- [x] `llm.py` — Ollama por default, **Gemini como respaldo real**
-      (`--backend gemini` / `MODEL_BACKEND=gemini`, con reintento
-      automático ante rate-limit y sobrecarga temporal de la API)
-- [x] `Makefile` (`check-format`, `check-isolation`) y corrida oficial de
-      reporte (seeds 101-110) ya hecha
-- [x] Frontend: las 4 pantallas de `frontend/Frontend.md` como estados de
-      una sola app — drop del estate, grafo progresivo, contraste
-      auto-abierto, leads con búsqueda — verificado con conexión apagada
+- [x] Estate + ground truth generator per seed (`generate/`), including
+      clean-population enforcement with no false positives
+      (`enforce_clean_population`)
+- [x] The 8 SQL tools + the 5 detectors (`tools/`)
+- [x] Investigator / Challenger / Validator (`agent/`) — Phases 4.1-4.3
+- [x] `cli.py` wires the full cycle and writes a real `submission.json`,
+      including the `ui` block (`report/ui_block.py`) the frontend consumes
+- [x] `case_file.py` — self-contained HTML with the 5 official sections,
+      money-trail SVG drawn in code
+- [x] `llm.py` — Ollama by default, **Gemini as a real fallback**
+      (`--backend gemini` / `MODEL_BACKEND=gemini`), with automatic retry
+      on rate-limit and temporary API overload. **Verified live**: run on
+      seed 004 with Gemini in place of Ollama, it flagged the exact same 3
+      fraud schemes (`kickback`, `round_tripping`, `threshold_splitting`)
+      in 18 seconds and 14 model calls — different wording, same findings
+- [x] `Makefile` (`check-format`, `check-isolation`) and the official
+      report run (seeds 101-110) already done
+- [x] Frontend: the 4 screens from `frontend/Frontend.md` as states of a
+      single app — estate drop, progressive graph, auto-opened contrast,
+      searchable leads — verified with the network turned off
 
-## Cómo correr lo que existe
+## How to run what exists
 
 ```bash
 cd backend
-make check-isolation                # 0 -- ground_truth no se filtra
+make check-isolation                # 0 -- ground_truth doesn't leak
 python -m src.cli --estate out/estate_seed004.db --out out/submission.json
-make check-format                   # valida ese submission.json
+make check-format                   # validates that submission.json
 ```
 
-Ollama corre local (`qwen2.5:7b` de momento) en `http://localhost:11434`.
-Para usar Gemini en vez de Ollama (respaldo, misma interfaz):
+Ollama runs locally (`qwen2.5:7b` for now) at `http://localhost:11434`.
+To use Gemini instead of Ollama (fallback, same interface):
 
 ```bash
-export GEMINI_API_KEY="tu-key"      # nunca en el repo
+export GEMINI_API_KEY="your-key"    # never in the repo
 python -m src.cli --estate out/estate_seed004.db --out out/submission_gemini.json --backend gemini
 ```
 
-`backend/src/llm.py` es la única pieza que le habla a cualquiera de los dos.
+`backend/src/llm.py` is the only piece that talks to either one.
 
 Frontend:
 
@@ -114,10 +121,16 @@ npm install
 npm run dev
 ```
 
-## Las reglas que no se negocian
+## The rules that don't get negotiated
 
-1. Ningún hallazgo se imprime sin pasar por retador y validador.
-2. Los montos salen de consultas SQL, nunca del modelo.
-3. El ground truth vive aparte y el agente no puede leerlo — ni importarlo.
-4. El mismo seed produce el mismo case file (determinismo: caché de prompts,
-   temperatura 0, orden estable de candidatos).
+1. No finding gets printed without going through the challenger and the
+   validator.
+2. Amounts come from SQL queries, never from the model.
+3. The ground truth lives apart and the agent can't read it — or import it.
+4. The same seed produces the same case file (determinism: prompt cache,
+   temperature 0, stable candidate order).
+
+## Acknowledgments
+
+Thank you to the MLH team, Tecnológico de Monterrey, and Infosys for making
+this hackathon possible.
