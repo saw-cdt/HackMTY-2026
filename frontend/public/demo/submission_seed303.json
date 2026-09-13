@@ -1,0 +1,308 @@
+{
+  "seed": 303,
+  "findings": [
+    {
+      "scheme_type": "kickback",
+      "entities": [
+        "RFC:EPB090517Q48",
+        "EMP:0016"
+      ],
+      "narrative": "Se detectó una transferencia de $25,814.01 de EPB090517Q48 a un empleado, lo cual sugiere un posible kickback. Esta transferencia se realizó después de la emisión de una única factura por $283,003.11, lo que no es consistente con operaciones normales.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 25814.01,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "EPB090517Q48",
+          "note": "Proveedor DISTRIBUIDORA EMPRESARIAL SA, categoria Logistica y transporte."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "bank_txns",
+          "record_id": "BNK-00115",
+          "note": "Transferencia de EPB090517Q48 a EMP:0016 por $25,814.01."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00119",
+          "note": "Factura pagada por la empresa antes del reembolso al empleado."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "RFC:EPB090517Q48",
+          "to": "EMP:0016",
+          "amount": 25814.01,
+          "date": "2024-09-16",
+          "exhibit_id": "EX-02"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    },
+    {
+      "scheme_type": "phantom_vendor",
+      "entities": [
+        "RFC:IVL1711162W4"
+      ],
+      "narrative": "El proveedor GRUPO MEXICANA SAPI DE CV no tiene contratos ni ordenes de compra registradas, y no ha realizado ninguna transferencia saliente. Sin embargo, ha emitido facturas por un monto significativo, lo cual sugiere la simulacion de operaciones para eludir la declaracion fiscal correcta.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 504015.9,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "IVL1711162W4",
+          "note": "Proveedor GRUPO MEXICANA SAPI DE CV, categoria Publicidad y marketing."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "efos_list",
+          "record_id": "IVL1711162W4",
+          "note": "Estatus definitivo en la lista 69-B, publicado 2025-07-13."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00117",
+          "note": "Factura sin contrato ni orden de compra que la respalde, $215,955.26."
+        },
+        {
+          "exhibit_id": "EX-04",
+          "source_table": "invoices",
+          "record_id": "INV-00116",
+          "note": "Factura sin contrato ni orden de compra que la respalde, $288,060.64."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "EMPRESA",
+          "to": "RFC:IVL1711162W4",
+          "amount": 215955.26,
+          "date": "2024-10-16",
+          "exhibit_id": "EX-03"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    },
+    {
+      "scheme_type": "round_tripping",
+      "entities": [
+        "RFC:BYY110401CT8"
+      ],
+      "narrative": "Se detecta un patrón de transacciones que sugiere la simulación de operaciones, ya que el dinero fluye de la empresa al proveedor y luego regresa, sin evidencia clara de que el proveedor haya realizado operaciones genuinas.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 1271328.47,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "BYY110401CT8",
+          "note": "Proveedor OPERADORA DEL NORTE SRL DE CV, categoria Logistica y transporte."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "bank_txns",
+          "record_id": "BNK-00113",
+          "note": "Retorno a la empresa, $1,271,328.47, 2024-05-22."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00118",
+          "note": "Factura que origino el primer pago del ciclo."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "072019267914880916",
+          "to": "036010058184527622",
+          "amount": 1436114.97,
+          "date": "2024-05-11",
+          "exhibit_id": null
+        },
+        {
+          "from": "036010058184527622",
+          "to": "002022656635880478",
+          "amount": 1391446.89,
+          "date": "2024-05-18",
+          "exhibit_id": null
+        },
+        {
+          "from": "002022656635880478",
+          "to": "072019267914880916",
+          "amount": 1271328.47,
+          "date": "2024-05-22",
+          "exhibit_id": "EX-02"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    }
+  ],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:THE971031HV7",
+      "signal": "round_tripping_ciclo_a_empresa",
+      "reason": "Tiene 0 contratos y 0 ordenes de compra registrados. La falta de actividad contractual y de compras sugiere que el proveedor no ha tenido interacción significativa con el sistema, lo cual descarta la posibilidad de fraude basado en la evidencia proporcionada.",
+      "tool_calls_made": [
+        "vendor",
+        "support_for",
+        "invoices_by(issuer)",
+        "invoices_by(receiver)",
+        "reciprocity"
+      ],
+      "closed_by": "investigator"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 11,
+    "mxn_cost": 0.0,
+    "wall_clock_seconds": 60.432,
+    "deterministic": true
+  },
+  "ui": {
+    "company": {
+      "rfc": "BHX030929FQ9",
+      "name": "Empresa investigada"
+    },
+    "nodes": [
+      {
+        "id": "RFC:BYY110401CT8",
+        "label": "OPERADORA DEL NORTE SRL DE CV",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:EPB090517Q48",
+        "label": "DISTRIBUIDORA EMPRESARIAL SA",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:IVL1711162W4",
+        "label": "GRUPO MEXICANA SAPI DE CV",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "EMP:0016",
+        "label": "CLAUDIA GONZALEZ PEREZ",
+        "type": "employee",
+        "state": "accused",
+        "step": 6
+      },
+      {
+        "id": "RFC:THE971031HV7",
+        "label": "SERVICIOS NACIONAL SC",
+        "type": "vendor",
+        "state": "dismissed",
+        "step": 2
+      }
+    ],
+    "edges": [
+      {
+        "from": "RFC:EPB090517Q48",
+        "to": "EMP:0016",
+        "amount": 25814.01,
+        "date": "2024-09-16",
+        "exhibit_id": "EX-02",
+        "step": 6
+      },
+      {
+        "from": "BHX030929FQ9",
+        "to": "RFC:IVL1711162W4",
+        "amount": 215955.26,
+        "date": "2024-10-16",
+        "exhibit_id": "EX-03",
+        "step": 6
+      },
+      {
+        "from": "BHX030929FQ9",
+        "to": "RFC:BYY110401CT8",
+        "amount": 1436114.97,
+        "date": "2024-05-11",
+        "exhibit_id": null,
+        "step": 4
+      },
+      {
+        "from": "RFC:BYY110401CT8",
+        "to": "RFC:THE971031HV7",
+        "amount": 1391446.89,
+        "date": "2024-05-18",
+        "exhibit_id": null,
+        "step": 5
+      },
+      {
+        "from": "RFC:THE971031HV7",
+        "to": "BHX030929FQ9",
+        "amount": 1271328.47,
+        "date": "2024-05-22",
+        "exhibit_id": "EX-02",
+        "step": 6
+      }
+    ],
+    "highlight": {
+      "accused": "RFC:EPB090517Q48",
+      "dismissed": "RFC:THE971031HV7"
+    },
+    "context": {
+      "RFC:THE971031HV7": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "reciprocity"
+        ],
+        "challenger_argument": "Tiene 0 contratos y 0 ordenes de compra registrados. La falta de actividad contractual y de compras sugiere que el proveedor no ha tenido interacción significativa con el sistema, lo cual descarta la posibilidad de fraude basado en la evidencia proporcionada.",
+        "result": "cerrado por investigator"
+      },
+      "RFC:EPB090517Q48": {
+        "signal": "kickback_transferencia_a_empleado",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "trace_money",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      },
+      "RFC:IVL1711162W4": {
+        "signal": "phantom_vendor_efos_sin_contrato_ni_oc",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "trace_money",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      },
+      "RFC:BYY110401CT8": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      }
+    }
+  }
+}

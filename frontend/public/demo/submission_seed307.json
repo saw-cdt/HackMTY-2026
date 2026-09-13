@@ -1,0 +1,320 @@
+{
+  "seed": 307,
+  "findings": [
+    {
+      "scheme_type": "kickback",
+      "entities": [
+        "RFC:UJA060408KR9",
+        "EMP:0003"
+      ],
+      "narrative": "Se detectó una transferencia de $33,336.32 de la empresa UJA060408KR9 a un empleado, lo cual sugiere un posible pago ilegal como regalo o soborno, violando el Articulo 69-B que prohíbe la simulación de operaciones.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 33336.32,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "UJA060408KR9",
+          "note": "Proveedor CONSULTORES INTEGRAL SA DE CV, categoria Servicios profesionales."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "bank_txns",
+          "record_id": "BNK-00109",
+          "note": "Transferencia de UJA060408KR9 a EMP:0003 por $33,336.32."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00115",
+          "note": "Factura pagada por la empresa antes del reembolso al empleado."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "RFC:UJA060408KR9",
+          "to": "EMP:0003",
+          "amount": 33336.32,
+          "date": "2024-04-23",
+          "exhibit_id": "EX-02"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    },
+    {
+      "scheme_type": "round_tripping",
+      "entities": [
+        "RFC:ATO011109SN3"
+      ],
+      "narrative": "Se detecta un patrón de transacciones donde el dinero sale de la empresa, circula por otros medios y regresa, lo cual sugiere la posibilidad de simulación de operaciones para evadir impuestos.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 1561149.99,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "ATO011109SN3",
+          "note": "Proveedor TECNOLOGIA INTEGRAL SA DE CV, categoria Tecnologia de la informacion."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "bank_txns",
+          "record_id": "BNK-00107",
+          "note": "Retorno a la empresa, $1,561,149.99, 2024-04-08."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00114",
+          "note": "Factura que origino el primer pago del ciclo."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "030001639513746026",
+          "to": "012001784116376779",
+          "amount": 1768688.55,
+          "date": "2024-04-03",
+          "exhibit_id": null
+        },
+        {
+          "from": "012001784116376779",
+          "to": "002010613655915569",
+          "amount": 1619343.28,
+          "date": "2024-04-05",
+          "exhibit_id": null
+        },
+        {
+          "from": "002010613655915569",
+          "to": "030001639513746026",
+          "amount": 1561149.99,
+          "date": "2024-04-08",
+          "exhibit_id": "EX-02"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    },
+    {
+      "scheme_type": "threshold_splitting",
+      "entities": [
+        "RFC:OMT120911F26"
+      ],
+      "narrative": "Se detectaron facturas emitidas por SERVICIOS NACIONAL SA por un total menor al umbral inferido, lo cual sugiere la posible simulacion de operaciones para evadir la declaracion fiscal obligatoria.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 454859.2,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "OMT120911F26",
+          "note": "Proveedor SERVICIOS NACIONAL SA, categoria Servicios profesionales."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "invoices",
+          "record_id": "INV-00109",
+          "note": "$96,840.32, justo debajo del umbral inferido ($100,000.00)."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00110",
+          "note": "$87,393.48, justo debajo del umbral inferido ($100,000.00)."
+        },
+        {
+          "exhibit_id": "EX-04",
+          "source_table": "invoices",
+          "record_id": "INV-00111",
+          "note": "$91,822.69, justo debajo del umbral inferido ($100,000.00)."
+        },
+        {
+          "exhibit_id": "EX-05",
+          "source_table": "invoices",
+          "record_id": "INV-00112",
+          "note": "$92,149.76, justo debajo del umbral inferido ($100,000.00)."
+        },
+        {
+          "exhibit_id": "EX-06",
+          "source_table": "invoices",
+          "record_id": "INV-00113",
+          "note": "$86,652.95, justo debajo del umbral inferido ($100,000.00)."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "EMPRESA",
+          "to": "RFC:OMT120911F26",
+          "amount": 96840.32,
+          "date": "2024-03-17",
+          "exhibit_id": "EX-02"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    }
+  ],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:BAB080515Q55",
+      "signal": "round_tripping_ciclo_a_empresa",
+      "reason": "Tiene 0 contratos y 0 ordenes de compra registrados. El proveedor no ha tenido interacción con la entidad en términos de contrataciones, lo cual descarta la posibilidad de fraude relacionado con el ciclo de round-tripping.",
+      "tool_calls_made": [
+        "vendor",
+        "support_for",
+        "invoices_by(issuer)",
+        "invoices_by(receiver)",
+        "reciprocity"
+      ],
+      "closed_by": "investigator"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 11,
+    "mxn_cost": 0.0,
+    "wall_clock_seconds": 72.065,
+    "deterministic": true
+  },
+  "ui": {
+    "company": {
+      "rfc": "UQJ080417746",
+      "name": "Empresa investigada"
+    },
+    "nodes": [
+      {
+        "id": "RFC:ATO011109SN3",
+        "label": "TECNOLOGIA INTEGRAL SA DE CV",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:OMT120911F26",
+        "label": "SERVICIOS NACIONAL SA",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:UJA060408KR9",
+        "label": "CONSULTORES INTEGRAL SA DE CV",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "EMP:0003",
+        "label": "MARIA GONZALEZ PEREZ",
+        "type": "employee",
+        "state": "accused",
+        "step": 6
+      },
+      {
+        "id": "RFC:BAB080515Q55",
+        "label": "SOLUCIONES MEXICANA SC",
+        "type": "vendor",
+        "state": "dismissed",
+        "step": 2
+      }
+    ],
+    "edges": [
+      {
+        "from": "RFC:UJA060408KR9",
+        "to": "EMP:0003",
+        "amount": 33336.32,
+        "date": "2024-04-23",
+        "exhibit_id": "EX-02",
+        "step": 6
+      },
+      {
+        "from": "UQJ080417746",
+        "to": "RFC:ATO011109SN3",
+        "amount": 1768688.55,
+        "date": "2024-04-03",
+        "exhibit_id": null,
+        "step": 4
+      },
+      {
+        "from": "RFC:ATO011109SN3",
+        "to": "RFC:BAB080515Q55",
+        "amount": 1619343.28,
+        "date": "2024-04-05",
+        "exhibit_id": null,
+        "step": 5
+      },
+      {
+        "from": "RFC:BAB080515Q55",
+        "to": "UQJ080417746",
+        "amount": 1561149.99,
+        "date": "2024-04-08",
+        "exhibit_id": "EX-02",
+        "step": 6
+      },
+      {
+        "from": "UQJ080417746",
+        "to": "RFC:OMT120911F26",
+        "amount": 96840.32,
+        "date": "2024-03-17",
+        "exhibit_id": "EX-02",
+        "step": 6
+      }
+    ],
+    "highlight": {
+      "accused": "RFC:UJA060408KR9",
+      "dismissed": "RFC:BAB080515Q55"
+    },
+    "context": {
+      "RFC:BAB080515Q55": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "reciprocity"
+        ],
+        "challenger_argument": "Tiene 0 contratos y 0 ordenes de compra registrados. El proveedor no ha tenido interacción con la entidad en términos de contrataciones, lo cual descarta la posibilidad de fraude relacionado con el ciclo de round-tripping.",
+        "result": "cerrado por investigator"
+      },
+      "RFC:UJA060408KR9": {
+        "signal": "kickback_transferencia_a_empleado",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "trace_money",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      },
+      "RFC:ATO011109SN3": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      },
+      "RFC:OMT120911F26": {
+        "signal": "threshold_splitting_facturas_bajo_umbral",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "trace_money",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      }
+    }
+  }
+}

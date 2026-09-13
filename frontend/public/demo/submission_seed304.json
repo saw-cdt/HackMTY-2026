@@ -1,0 +1,123 @@
+{
+  "seed": 304,
+  "findings": [
+    {
+      "scheme_type": "phantom_vendor",
+      "entities": [
+        "RFC:EJT110824BJ6"
+      ],
+      "narrative": "El proveedor no tiene contratos ni ordenes de compra, pero ha emitido facturas por un monto significativo. Esto sugiere la simulacion de operaciones, que es prohibida por el Articulo 69-B.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 1863365.03,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "EJT110824BJ6",
+          "note": "Proveedor SERVICIOS PROFESIONAL SA, categoria Servicios de mantenimiento."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "efos_list",
+          "record_id": "EJT110824BJ6",
+          "note": "Estatus definitivo en la lista 69-B, publicado 2025-10-09."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00137",
+          "note": "Factura sin contrato ni orden de compra que la respalde, $1,242,050.37."
+        },
+        {
+          "exhibit_id": "EX-04",
+          "source_table": "invoices",
+          "record_id": "INV-00138",
+          "note": "Factura sin contrato ni orden de compra que la respalde, $621,314.66."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "EMPRESA",
+          "to": "RFC:EJT110824BJ6",
+          "amount": 1242050.37,
+          "date": "2024-08-20",
+          "exhibit_id": "EX-03"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    }
+  ],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:UES0604245A8",
+      "signal": "round_tripping_ciclo_a_empresa",
+      "reason": "El hecho verificado confirma que la factura correspondiente existe, por lo que queda explicado el flujo de fondos.",
+      "tool_calls_made": [],
+      "closed_by": "challenger"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 6,
+    "mxn_cost": 0.0,
+    "wall_clock_seconds": 34.513,
+    "deterministic": true
+  },
+  "ui": {
+    "company": {
+      "rfc": "EGN1707182D3",
+      "name": "Empresa investigada"
+    },
+    "nodes": [
+      {
+        "id": "RFC:EJT110824BJ6",
+        "label": "SERVICIOS PROFESIONAL SA",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:UES0604245A8",
+        "label": "SUMINISTROS NACIONAL SA DE CV",
+        "type": "vendor",
+        "state": "dismissed",
+        "step": 2
+      }
+    ],
+    "edges": [
+      {
+        "from": "EGN1707182D3",
+        "to": "RFC:EJT110824BJ6",
+        "amount": 1242050.37,
+        "date": "2024-08-20",
+        "exhibit_id": "EX-03",
+        "step": 6
+      }
+    ],
+    "highlight": {
+      "accused": "RFC:EJT110824BJ6",
+      "dismissed": "RFC:UES0604245A8"
+    },
+    "context": {
+      "RFC:UES0604245A8": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [],
+        "challenger_argument": "El hecho verificado confirma que la factura correspondiente existe, por lo que queda explicado el flujo de fondos.",
+        "result": "cerrado por challenger"
+      },
+      "RFC:EJT110824BJ6": {
+        "signal": "phantom_vendor_efos_sin_contrato_ni_oc",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "trace_money",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      }
+    }
+  }
+}

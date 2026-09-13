@@ -1,0 +1,47 @@
+{
+  "seed": 302,
+  "findings": [],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:ZNE190330AO3",
+      "signal": "round_tripping_ciclo_a_empresa",
+      "reason": "El hecho verificado confirma que la factura correspondiente existe, lo que explica el flujo de dinero.",
+      "tool_calls_made": [],
+      "closed_by": "challenger"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 3,
+    "mxn_cost": 0.0,
+    "wall_clock_seconds": 16.556,
+    "deterministic": true
+  },
+  "ui": {
+    "company": {
+      "rfc": "RRR1304044M0",
+      "name": "Empresa investigada"
+    },
+    "nodes": [
+      {
+        "id": "RFC:ZNE190330AO3",
+        "label": "CONSULTORES INDUSTRIAL SA DE CV",
+        "type": "vendor",
+        "state": "dismissed",
+        "step": 2
+      }
+    ],
+    "edges": [],
+    "highlight": {
+      "accused": null,
+      "dismissed": "RFC:ZNE190330AO3"
+    },
+    "context": {
+      "RFC:ZNE190330AO3": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [],
+        "challenger_argument": "El hecho verificado confirma que la factura correspondiente existe, lo que explica el flujo de dinero.",
+        "result": "cerrado por challenger"
+      }
+    }
+  }
+}

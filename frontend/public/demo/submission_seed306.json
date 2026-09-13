@@ -1,0 +1,177 @@
+{
+  "seed": 306,
+  "findings": [
+    {
+      "scheme_type": "revenue_inflation",
+      "entities": [
+        "RFC:NQZ030707RN6",
+        "RFC:JSY0502078C3"
+      ],
+      "narrative": "Se detectaron facturas emitidas por NQZ030707RN6 a JSY0502078C3 por un monto total de $1,612,316.58, pero no hay transferencias bancarias asociadas. Esto sugiere la simulacion de operaciones para inflacion de ingresos.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 205830.45,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "invoices",
+          "record_id": "INV-00119",
+          "note": "Factura emitida por la empresa a JSY0502078C3, $205,830.45, sin transferencia que la liquide."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "vendors",
+          "record_id": "JSY0502078C3",
+          "note": "Cliente GRUPO INDUSTRIAL SA: sin bank_txn de su CLABE hacia la empresa."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "ledger",
+          "record_id": "459",
+          "note": "Asiento de la venta, sin contraparte de cobro en bank_txns."
+        },
+        {
+          "exhibit_id": "EX-04",
+          "source_table": "ledger",
+          "record_id": "460",
+          "note": "Asiento de la venta, sin contraparte de cobro en bank_txns."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "RFC:NQZ030707RN6",
+          "to": "RFC:JSY0502078C3",
+          "amount": 205830.45,
+          "date": "2024-03-15",
+          "exhibit_id": "EX-01"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    },
+    {
+      "scheme_type": "revenue_inflation",
+      "entities": [
+        "RFC:NQZ030707RN6",
+        "RFC:JSY0502078C3"
+      ],
+      "narrative": "Se detectaron facturas emitidas por NQZ030707RN6 a JSY0502078C3 por un monto significativo, pero no se observaron transferencias bancarias correspondientes. Esto sugiere la posibilidad de una simulacion de operaciones para inflacionar el ingreso.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 789006.16,
+      "confidence": "probable",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "invoices",
+          "record_id": "INV-00120",
+          "note": "Factura emitida por la empresa a JSY0502078C3, $789,006.16, sin transferencia que la liquide."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "vendors",
+          "record_id": "JSY0502078C3",
+          "note": "Cliente GRUPO INDUSTRIAL SA: sin bank_txn de su CLABE hacia la empresa."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "ledger",
+          "record_id": "461",
+          "note": "Asiento de la venta, sin contraparte de cobro en bank_txns."
+        },
+        {
+          "exhibit_id": "EX-04",
+          "source_table": "ledger",
+          "record_id": "462",
+          "note": "Asiento de la venta, sin contraparte de cobro en bank_txns."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "RFC:NQZ030707RN6",
+          "to": "RFC:JSY0502078C3",
+          "amount": 789006.16,
+          "date": "2024-03-12",
+          "exhibit_id": "EX-01"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    }
+  ],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:ZRS181003125",
+      "signal": "round_tripping_ciclo_a_empresa",
+      "reason": "El hecho verificado muestra que la empresa recibió un pago final, por lo que el dinero sale y regresa con una explicación inocente.",
+      "tool_calls_made": [],
+      "closed_by": "challenger"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 9,
+    "mxn_cost": 0.0,
+    "wall_clock_seconds": 58.956,
+    "deterministic": true
+  },
+  "ui": {
+    "company": {
+      "rfc": "NQZ030707RN6",
+      "name": "Empresa investigada"
+    },
+    "nodes": [
+      {
+        "id": "RFC:JSY0502078C3",
+        "label": "GRUPO INDUSTRIAL SA",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:ZRS181003125",
+        "label": "GRUPO DEL BAJIO SA DE CV",
+        "type": "vendor",
+        "state": "dismissed",
+        "step": 2
+      }
+    ],
+    "edges": [
+      {
+        "from": "NQZ030707RN6",
+        "to": "RFC:JSY0502078C3",
+        "amount": 205830.45,
+        "date": "2024-03-15",
+        "exhibit_id": "EX-01",
+        "step": 6
+      },
+      {
+        "from": "NQZ030707RN6",
+        "to": "RFC:JSY0502078C3",
+        "amount": 789006.16,
+        "date": "2024-03-12",
+        "exhibit_id": "EX-01",
+        "step": 6
+      }
+    ],
+    "highlight": {
+      "accused": "RFC:JSY0502078C3",
+      "dismissed": "RFC:ZRS181003125"
+    },
+    "context": {
+      "RFC:ZRS181003125": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [],
+        "challenger_argument": "El hecho verificado muestra que la empresa recibió un pago final, por lo que el dinero sale y regresa con una explicación inocente.",
+        "result": "cerrado por challenger"
+      },
+      "RFC:JSY0502078C3": {
+        "signal": "revenue_inflation_factura_sin_bank_txn",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      }
+    }
+  }
+}

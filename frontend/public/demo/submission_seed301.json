@@ -1,0 +1,462 @@
+{
+  "seed": 301,
+  "findings": [
+    {
+      "scheme_type": "revenue_inflation",
+      "entities": [
+        "RFC:MUZ170217833",
+        "RFC:XSK991219KK2"
+      ],
+      "narrative": "Se detectaron facturas emitidas por un RFC no registrado, sin contratos ni ordenes de compra, y un gran volumen de facturas sin correspondencia bancaria. Esto sugiere la posibilidad de simulacion de operaciones.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 754085.48,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "invoices",
+          "record_id": "INV-00125",
+          "note": "Factura emitida por la empresa a XSK991219KK2, $754,085.48, sin transferencia que la liquide."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "vendors",
+          "record_id": "XSK991219KK2",
+          "note": "Cliente SOLUCIONES DEL NORTE SAPI DE CV: sin bank_txn de su CLABE hacia la empresa."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "ledger",
+          "record_id": "485",
+          "note": "Asiento de la venta, sin contraparte de cobro en bank_txns."
+        },
+        {
+          "exhibit_id": "EX-04",
+          "source_table": "ledger",
+          "record_id": "486",
+          "note": "Asiento de la venta, sin contraparte de cobro en bank_txns."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "RFC:MUZ170217833",
+          "to": "RFC:XSK991219KK2",
+          "amount": 754085.48,
+          "date": "2024-07-12",
+          "exhibit_id": "EX-01"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    },
+    {
+      "scheme_type": "revenue_inflation",
+      "entities": [
+        "RFC:MUZ170217833",
+        "RFC:XSK991219KK2"
+      ],
+      "narrative": "Se detectaron facturas emitidas por un RFC no registrado, sin contratos ni ordenes de compra, y un gran volumen de facturas sin respaldo en transferencias bancarias. Esto sugiere la posibilidad de simulacion de operaciones.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 363587.5,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "invoices",
+          "record_id": "INV-00126",
+          "note": "Factura emitida por la empresa a XSK991219KK2, $363,587.50, sin transferencia que la liquide."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "vendors",
+          "record_id": "XSK991219KK2",
+          "note": "Cliente SOLUCIONES DEL NORTE SAPI DE CV: sin bank_txn de su CLABE hacia la empresa."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "ledger",
+          "record_id": "487",
+          "note": "Asiento de la venta, sin contraparte de cobro en bank_txns."
+        },
+        {
+          "exhibit_id": "EX-04",
+          "source_table": "ledger",
+          "record_id": "488",
+          "note": "Asiento de la venta, sin contraparte de cobro en bank_txns."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "RFC:MUZ170217833",
+          "to": "RFC:XSK991219KK2",
+          "amount": 363587.5,
+          "date": "2024-10-28",
+          "exhibit_id": "EX-01"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    },
+    {
+      "scheme_type": "revenue_inflation",
+      "entities": [
+        "RFC:MUZ170217833",
+        "RFC:XSK991219KK2"
+      ],
+      "narrative": "Se detectaron facturas emitidas por un RFC no registrado, sin contratos ni ordenes de compra, y un gran volumen de facturas sin respaldo en transferencias bancarias. Esto sugiere la posibilidad de simulacion de operaciones para inflacion de ingresos.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 693103.04,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "invoices",
+          "record_id": "INV-00127",
+          "note": "Factura emitida por la empresa a XSK991219KK2, $693,103.04, sin transferencia que la liquide."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "vendors",
+          "record_id": "XSK991219KK2",
+          "note": "Cliente SOLUCIONES DEL NORTE SAPI DE CV: sin bank_txn de su CLABE hacia la empresa."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "ledger",
+          "record_id": "489",
+          "note": "Asiento de la venta, sin contraparte de cobro en bank_txns."
+        },
+        {
+          "exhibit_id": "EX-04",
+          "source_table": "ledger",
+          "record_id": "490",
+          "note": "Asiento de la venta, sin contraparte de cobro en bank_txns."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "RFC:MUZ170217833",
+          "to": "RFC:XSK991219KK2",
+          "amount": 693103.04,
+          "date": "2024-09-30",
+          "exhibit_id": "EX-01"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    },
+    {
+      "scheme_type": "round_tripping",
+      "entities": [
+        "RFC:JDJ100809NT6"
+      ],
+      "narrative": "Se detecta un patrón de transacciones que sugiere la simulación de operaciones, ya que el dinero fluye de la empresa al RFC investigado y luego regresa a la empresa, violando el Articulo 69-B.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 1141291.84,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "JDJ100809NT6",
+          "note": "Proveedor GRUPO REGIOMONTANA SA DE CV, categoria Construccion y obra civil."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "bank_txns",
+          "record_id": "BNK-00122",
+          "note": "Retorno a la empresa, $1,141,291.84, 2024-04-03."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00128",
+          "note": "Factura que origino el primer pago del ciclo."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "127014138217840247",
+          "to": "058019205035740869",
+          "amount": 1378801.84,
+          "date": "2024-03-22",
+          "exhibit_id": null
+        },
+        {
+          "from": "058019205035740869",
+          "to": "021010561322648823",
+          "amount": 1315460.23,
+          "date": "2024-03-29",
+          "exhibit_id": null
+        },
+        {
+          "from": "021010561322648823",
+          "to": "021001702608377660",
+          "amount": 1224959.77,
+          "date": "2024-03-31",
+          "exhibit_id": null
+        },
+        {
+          "from": "021001702608377660",
+          "to": "127014138217840247",
+          "amount": 1141291.84,
+          "date": "2024-04-03",
+          "exhibit_id": "EX-02"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    },
+    {
+      "scheme_type": "threshold_splitting",
+      "entities": [
+        "RFC:VJX080709T61"
+      ],
+      "narrative": "Se detectaron facturas emitidas por CONSULTORES NACIONAL SC por un total menor al umbral inferido, lo cual sugiere la posible simulacion de operaciones para evadir la declaracion fiscal.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 680685.13,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "VJX080709T61",
+          "note": "Proveedor CONSULTORES NACIONAL SC, categoria Servicios profesionales."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "invoices",
+          "record_id": "INV-00122",
+          "note": "$238,323.07, justo debajo del umbral inferido ($250,000.00)."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00123",
+          "note": "$228,544.26, justo debajo del umbral inferido ($250,000.00)."
+        },
+        {
+          "exhibit_id": "EX-04",
+          "source_table": "invoices",
+          "record_id": "INV-00124",
+          "note": "$213,817.80, justo debajo del umbral inferido ($250,000.00)."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "EMPRESA",
+          "to": "RFC:VJX080709T61",
+          "amount": 238323.07,
+          "date": "2024-06-14",
+          "exhibit_id": "EX-02"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    }
+  ],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:AOH140314VR6",
+      "signal": "round_tripping_ciclo_a_empresa",
+      "reason": "Tiene 0 contratos y 0 ordenes de compra registrados. El hecho de que no haya contratos ni ordenes de compra sugiere que el proveedor no ha realizado ninguna transacción con la entidad, lo cual descarta la posibilidad de fraude en este caso.",
+      "tool_calls_made": [
+        "vendor",
+        "support_for",
+        "invoices_by(issuer)",
+        "invoices_by(receiver)",
+        "reciprocity"
+      ],
+      "closed_by": "investigator"
+    },
+    {
+      "entity": "RFC:CYF010624Z59",
+      "signal": "round_tripping_ciclo_a_empresa",
+      "reason": "Tiene 0 contratos y 0 ordenes de compra registrados. La falta de actividad contractual y de compras en el expediente descarta la posibilidad de fraude, ya que un proveedor con señales de round-tripping generalmente tendría algún nivel de interacción con la entidad, lo cual no se observa en este caso.",
+      "tool_calls_made": [
+        "vendor",
+        "support_for",
+        "invoices_by(issuer)",
+        "invoices_by(receiver)",
+        "reciprocity"
+      ],
+      "closed_by": "investigator"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 19,
+    "mxn_cost": 0.0,
+    "wall_clock_seconds": 90.883,
+    "deterministic": true
+  },
+  "ui": {
+    "company": {
+      "rfc": "MUZ170217833",
+      "name": "Empresa investigada"
+    },
+    "nodes": [
+      {
+        "id": "RFC:JDJ100809NT6",
+        "label": "GRUPO REGIOMONTANA SA DE CV",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:VJX080709T61",
+        "label": "CONSULTORES NACIONAL SC",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:XSK991219KK2",
+        "label": "SOLUCIONES DEL NORTE SAPI DE CV",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:AOH140314VR6",
+        "label": "SERVICIOS PROFESIONAL SA DE CV",
+        "type": "vendor",
+        "state": "dismissed",
+        "step": 2
+      },
+      {
+        "id": "RFC:CYF010624Z59",
+        "label": "CONSULTORES PROFESIONAL SA",
+        "type": "vendor",
+        "state": "dismissed",
+        "step": 2
+      }
+    ],
+    "edges": [
+      {
+        "from": "MUZ170217833",
+        "to": "RFC:XSK991219KK2",
+        "amount": 754085.48,
+        "date": "2024-07-12",
+        "exhibit_id": "EX-01",
+        "step": 6
+      },
+      {
+        "from": "MUZ170217833",
+        "to": "RFC:XSK991219KK2",
+        "amount": 363587.5,
+        "date": "2024-10-28",
+        "exhibit_id": "EX-01",
+        "step": 6
+      },
+      {
+        "from": "MUZ170217833",
+        "to": "RFC:XSK991219KK2",
+        "amount": 693103.04,
+        "date": "2024-09-30",
+        "exhibit_id": "EX-01",
+        "step": 6
+      },
+      {
+        "from": "MUZ170217833",
+        "to": "RFC:JDJ100809NT6",
+        "amount": 1378801.84,
+        "date": "2024-03-22",
+        "exhibit_id": null,
+        "step": 4
+      },
+      {
+        "from": "RFC:JDJ100809NT6",
+        "to": "RFC:CYF010624Z59",
+        "amount": 1315460.23,
+        "date": "2024-03-29",
+        "exhibit_id": null,
+        "step": 5
+      },
+      {
+        "from": "RFC:CYF010624Z59",
+        "to": "RFC:AOH140314VR6",
+        "amount": 1224959.77,
+        "date": "2024-03-31",
+        "exhibit_id": null,
+        "step": 5
+      },
+      {
+        "from": "RFC:AOH140314VR6",
+        "to": "MUZ170217833",
+        "amount": 1141291.84,
+        "date": "2024-04-03",
+        "exhibit_id": "EX-02",
+        "step": 6
+      },
+      {
+        "from": "MUZ170217833",
+        "to": "RFC:VJX080709T61",
+        "amount": 238323.07,
+        "date": "2024-06-14",
+        "exhibit_id": "EX-02",
+        "step": 6
+      }
+    ],
+    "highlight": {
+      "accused": "RFC:XSK991219KK2",
+      "dismissed": "RFC:AOH140314VR6"
+    },
+    "context": {
+      "RFC:AOH140314VR6": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "reciprocity"
+        ],
+        "challenger_argument": "Tiene 0 contratos y 0 ordenes de compra registrados. El hecho de que no haya contratos ni ordenes de compra sugiere que el proveedor no ha realizado ninguna transacción con la entidad, lo cual descarta la posibilidad de fraude en este caso.",
+        "result": "cerrado por investigator"
+      },
+      "RFC:CYF010624Z59": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "reciprocity"
+        ],
+        "challenger_argument": "Tiene 0 contratos y 0 ordenes de compra registrados. La falta de actividad contractual y de compras en el expediente descarta la posibilidad de fraude, ya que un proveedor con señales de round-tripping generalmente tendría algún nivel de interacción con la entidad, lo cual no se observa en este caso.",
+        "result": "cerrado por investigator"
+      },
+      "RFC:XSK991219KK2": {
+        "signal": "revenue_inflation_factura_sin_bank_txn",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      },
+      "RFC:JDJ100809NT6": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      },
+      "RFC:VJX080709T61": {
+        "signal": "threshold_splitting_facturas_bajo_umbral",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "trace_money",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      }
+    }
+  }
+}

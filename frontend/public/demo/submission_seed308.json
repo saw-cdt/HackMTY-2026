@@ -1,0 +1,125 @@
+{
+  "seed": 308,
+  "findings": [
+    {
+      "scheme_type": "kickback",
+      "entities": [
+        "RFC:MCU130805MV6",
+        "EMP:0017"
+      ],
+      "narrative": "Se detectó una transferencia de $71,675.86 de MCU130805MV6 a un empleado, lo cual sugiere un posible kickback. Esta transferencia se realizó después de que MCU130805MV6 comenzara a operar, y no aparece en la lista 69-B, lo que es inusual y apunta a una posible simulación de operaciones.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 71675.86,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "MCU130805MV6",
+          "note": "Proveedor SUMINISTROS MEXICANA SA DE CV, categoria Suministro de materiales."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "bank_txns",
+          "record_id": "BNK-00122",
+          "note": "Transferencia de MCU130805MV6 a EMP:0017 por $71,675.86."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00122",
+          "note": "Factura pagada por la empresa antes del reembolso al empleado."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "RFC:MCU130805MV6",
+          "to": "EMP:0017",
+          "amount": 71675.86,
+          "date": "2024-10-18",
+          "exhibit_id": "EX-02"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    }
+  ],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:BMO970502LK7",
+      "signal": "round_tripping_ciclo_a_empresa",
+      "reason": "El hecho verificado confirma que la empresa recibió un pago final de $652,163.94, lo cual explica el flujo de fondos.",
+      "tool_calls_made": [],
+      "closed_by": "challenger"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 6,
+    "mxn_cost": 0.0,
+    "wall_clock_seconds": 43.635,
+    "deterministic": true
+  },
+  "ui": {
+    "company": {
+      "rfc": "FEM101209X64",
+      "name": "Empresa investigada"
+    },
+    "nodes": [
+      {
+        "id": "RFC:MCU130805MV6",
+        "label": "SUMINISTROS MEXICANA SA DE CV",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "EMP:0017",
+        "label": "CLAUDIA RAMIREZ HERNANDEZ",
+        "type": "employee",
+        "state": "accused",
+        "step": 6
+      },
+      {
+        "id": "RFC:BMO970502LK7",
+        "label": "CONSULTORES EMPRESARIAL SAPI DE CV",
+        "type": "vendor",
+        "state": "dismissed",
+        "step": 2
+      }
+    ],
+    "edges": [
+      {
+        "from": "RFC:MCU130805MV6",
+        "to": "EMP:0017",
+        "amount": 71675.86,
+        "date": "2024-10-18",
+        "exhibit_id": "EX-02",
+        "step": 6
+      }
+    ],
+    "highlight": {
+      "accused": "RFC:MCU130805MV6",
+      "dismissed": "RFC:BMO970502LK7"
+    },
+    "context": {
+      "RFC:BMO970502LK7": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [],
+        "challenger_argument": "El hecho verificado confirma que la empresa recibió un pago final de $652,163.94, lo cual explica el flujo de fondos.",
+        "result": "cerrado por challenger"
+      },
+      "RFC:MCU130805MV6": {
+        "signal": "kickback_transferencia_a_empleado",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "trace_money",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      }
+    }
+  }
+}

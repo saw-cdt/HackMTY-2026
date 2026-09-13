@@ -1,0 +1,378 @@
+{
+  "seed": 305,
+  "findings": [
+    {
+      "scheme_type": "phantom_vendor",
+      "entities": [
+        "RFC:YPQ950919GA1"
+      ],
+      "narrative": "El proveedor COMERCIALIZADORA MEXICANA SC no tiene contratos ni ordenes de compra registradas, y no ha realizado transferencias salientes, lo que sugiere la simulacion de operaciones. Las facturas emitidas y la falta de actividad contraria a las normas indican un hallazgo de phantom_vendor.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 2418561.71,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "YPQ950919GA1",
+          "note": "Proveedor COMERCIALIZADORA MEXICANA SC, categoria Renta de equipo."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "efos_list",
+          "record_id": "YPQ950919GA1",
+          "note": "Estatus definitivo en la lista 69-B, publicado 2024-09-18."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00150",
+          "note": "Factura sin contrato ni orden de compra que la respalde, $1,311,443.88."
+        },
+        {
+          "exhibit_id": "EX-04",
+          "source_table": "invoices",
+          "record_id": "INV-00149",
+          "note": "Factura sin contrato ni orden de compra que la respalde, $303,615.52."
+        },
+        {
+          "exhibit_id": "EX-05",
+          "source_table": "invoices",
+          "record_id": "INV-00148",
+          "note": "Factura sin contrato ni orden de compra que la respalde, $803,502.31."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "EMPRESA",
+          "to": "RFC:YPQ950919GA1",
+          "amount": 1311443.88,
+          "date": "2024-06-08",
+          "exhibit_id": "EX-03"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    },
+    {
+      "scheme_type": "revenue_inflation",
+      "entities": [
+        "RFC:FSS120713S72",
+        "RFC:IHP1909016G0"
+      ],
+      "narrative": "Se detecta una inflacion de ingresos a traves de facturas emitidas por FSS120713S72 a IHP1909016G0 por un monto significativo, sin evidencia de transacciones bancarias correspondientes.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 468313.28,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "invoices",
+          "record_id": "INV-00147",
+          "note": "Factura emitida por la empresa a IHP1909016G0, $468,313.28, sin transferencia que la liquide."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "vendors",
+          "record_id": "IHP1909016G0",
+          "note": "Cliente TECNOLOGIA REGIOMONTANA SA DE CV: sin bank_txn de su CLABE hacia la empresa."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "ledger",
+          "record_id": "563",
+          "note": "Asiento de la venta, sin contraparte de cobro en bank_txns."
+        },
+        {
+          "exhibit_id": "EX-04",
+          "source_table": "ledger",
+          "record_id": "564",
+          "note": "Asiento de la venta, sin contraparte de cobro en bank_txns."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "RFC:FSS120713S72",
+          "to": "RFC:IHP1909016G0",
+          "amount": 468313.28,
+          "date": "2024-10-10",
+          "exhibit_id": "EX-01"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    },
+    {
+      "scheme_type": "round_tripping",
+      "entities": [
+        "RFC:FUA990226773"
+      ],
+      "narrative": "Se detecta un patrón de transacciones que sugiere la simulación de operaciones, ya que el dinero fluye de la empresa a un proveedor y luego regresa, sin evidencia clara de que el proveedor haya realizado las obras o servicios contratados.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 1721479.58,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "FUA990226773",
+          "note": "Proveedor CONSTRUCTORA MEXICANA SRL DE CV, categoria Construccion y obra civil."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "bank_txns",
+          "record_id": "BNK-00138",
+          "note": "Retorno a la empresa, $1,721,479.58, 2024-07-01."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00146",
+          "note": "Factura que origino el primer pago del ciclo."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "127010279432079730",
+          "to": "002022051598485285",
+          "amount": 1996364.89,
+          "date": "2024-06-08",
+          "exhibit_id": null
+        },
+        {
+          "from": "002022051598485285",
+          "to": "072022059372841608",
+          "amount": 1888931.71,
+          "date": "2024-06-16",
+          "exhibit_id": null
+        },
+        {
+          "from": "072022059372841608",
+          "to": "127022556217996354",
+          "amount": 1801051.22,
+          "date": "2024-06-23",
+          "exhibit_id": null
+        },
+        {
+          "from": "127022556217996354",
+          "to": "127010279432079730",
+          "amount": 1721479.58,
+          "date": "2024-07-01",
+          "exhibit_id": "EX-02"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    }
+  ],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:SKU2006126A9",
+      "signal": "round_tripping_ciclo_a_empresa",
+      "reason": "Tiene 0 contratos y 0 ordenes de compra registrados. La falta de actividad contractual y de compras en el expediente descarta la posibilidad de fraude, ya que un proveedor con señales de round_tripping_ciclo_a_empresa generalmente tendría algún historial de contratación o compras.",
+      "tool_calls_made": [
+        "vendor",
+        "support_for",
+        "invoices_by(issuer)",
+        "invoices_by(receiver)",
+        "reciprocity"
+      ],
+      "closed_by": "investigator"
+    },
+    {
+      "entity": "RFC:UJQ191017935",
+      "signal": "round_tripping_ciclo_a_empresa",
+      "reason": "El hecho verificado confirma que la empresa recibió un pago final de $222,743.25, lo cual explica el flujo de dinero.",
+      "tool_calls_made": [],
+      "closed_by": "challenger"
+    },
+    {
+      "entity": "RFC:XVU991017ZI0",
+      "signal": "round_tripping_ciclo_a_empresa",
+      "reason": "Tiene 0 contratos y 0 ordenes de compra registrados. El detector 'round_tripping_ciclo_a_empresa' sugiere un ciclo de vuelco de dinero que podría indicar fraude, pero la ausencia de contratos y ordenes de compra en el expediente descarta esta posibilidad, ya que no hay evidencia de actividades comerciales.",
+      "tool_calls_made": [
+        "vendor",
+        "support_for",
+        "invoices_by(issuer)",
+        "invoices_by(receiver)",
+        "reciprocity"
+      ],
+      "closed_by": "investigator"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 16,
+    "mxn_cost": 0.0,
+    "wall_clock_seconds": 103.581,
+    "deterministic": true
+  },
+  "ui": {
+    "company": {
+      "rfc": "FSS120713S72",
+      "name": "Empresa investigada"
+    },
+    "nodes": [
+      {
+        "id": "RFC:FUA990226773",
+        "label": "CONSTRUCTORA MEXICANA SRL DE CV",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:IHP1909016G0",
+        "label": "TECNOLOGIA REGIOMONTANA SA DE CV",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:YPQ950919GA1",
+        "label": "COMERCIALIZADORA MEXICANA SC",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:SKU2006126A9",
+        "label": "OPERADORA DEL BAJIO SAPI DE CV",
+        "type": "vendor",
+        "state": "dismissed",
+        "step": 2
+      },
+      {
+        "id": "RFC:UJQ191017935",
+        "label": "OPERADORA PROFESIONAL SAPI DE CV",
+        "type": "vendor",
+        "state": "dismissed",
+        "step": 2
+      },
+      {
+        "id": "RFC:XVU991017ZI0",
+        "label": "GRUPO PROFESIONAL SA DE CV",
+        "type": "vendor",
+        "state": "dismissed",
+        "step": 2
+      }
+    ],
+    "edges": [
+      {
+        "from": "FSS120713S72",
+        "to": "RFC:YPQ950919GA1",
+        "amount": 1311443.88,
+        "date": "2024-06-08",
+        "exhibit_id": "EX-03",
+        "step": 6
+      },
+      {
+        "from": "FSS120713S72",
+        "to": "RFC:IHP1909016G0",
+        "amount": 468313.28,
+        "date": "2024-10-10",
+        "exhibit_id": "EX-01",
+        "step": 6
+      },
+      {
+        "from": "FSS120713S72",
+        "to": "RFC:FUA990226773",
+        "amount": 1996364.89,
+        "date": "2024-06-08",
+        "exhibit_id": null,
+        "step": 4
+      },
+      {
+        "from": "RFC:FUA990226773",
+        "to": "RFC:SKU2006126A9",
+        "amount": 1888931.71,
+        "date": "2024-06-16",
+        "exhibit_id": null,
+        "step": 5
+      },
+      {
+        "from": "RFC:SKU2006126A9",
+        "to": "RFC:XVU991017ZI0",
+        "amount": 1801051.22,
+        "date": "2024-06-23",
+        "exhibit_id": null,
+        "step": 5
+      },
+      {
+        "from": "RFC:XVU991017ZI0",
+        "to": "FSS120713S72",
+        "amount": 1721479.58,
+        "date": "2024-07-01",
+        "exhibit_id": "EX-02",
+        "step": 6
+      }
+    ],
+    "highlight": {
+      "accused": "RFC:YPQ950919GA1",
+      "dismissed": "RFC:SKU2006126A9"
+    },
+    "context": {
+      "RFC:SKU2006126A9": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "reciprocity"
+        ],
+        "challenger_argument": "Tiene 0 contratos y 0 ordenes de compra registrados. La falta de actividad contractual y de compras en el expediente descarta la posibilidad de fraude, ya que un proveedor con señales de round_tripping_ciclo_a_empresa generalmente tendría algún historial de contratación o compras.",
+        "result": "cerrado por investigator"
+      },
+      "RFC:UJQ191017935": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [],
+        "challenger_argument": "El hecho verificado confirma que la empresa recibió un pago final de $222,743.25, lo cual explica el flujo de dinero.",
+        "result": "cerrado por challenger"
+      },
+      "RFC:XVU991017ZI0": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "reciprocity"
+        ],
+        "challenger_argument": "Tiene 0 contratos y 0 ordenes de compra registrados. El detector 'round_tripping_ciclo_a_empresa' sugiere un ciclo de vuelco de dinero que podría indicar fraude, pero la ausencia de contratos y ordenes de compra en el expediente descarta esta posibilidad, ya que no hay evidencia de actividades comerciales.",
+        "result": "cerrado por investigator"
+      },
+      "RFC:YPQ950919GA1": {
+        "signal": "phantom_vendor_efos_sin_contrato_ni_oc",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "trace_money",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      },
+      "RFC:IHP1909016G0": {
+        "signal": "revenue_inflation_factura_sin_bank_txn",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      },
+      "RFC:FUA990226773": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      }
+    }
+  }
+}

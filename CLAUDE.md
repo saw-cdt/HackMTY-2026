@@ -150,7 +150,10 @@ Progreso, paso por paso:
     1. `model.companyRfc` salía vacío: `adaptSubmission` leía `submission.company_rfc` (campo que no existe en el formato oficial) en vez de `submission.ui.company.rfc`. Corregido con fallback: `submission.ui?.company?.rfc || submission.company_rfc || ''`.
     2. La fila "Qué mostró" del contraste salía vacía para TODO hallazgo acusado real: `ui.context` (tal como lo define `FRONTEND.md`) nunca trae `narrative`/`rule_broken`, solo `signal`/`tool_calls_made`/`challenger_argument`/`result` — el hand-written demo los traía de más, por eso no se había notado antes. Corregido en `buildContextFor`: cuando existe `ui.context[id]` (rama `explicit`), se enriquece con `narrative`/`rule_broken`/`peso_amount` del `finding` real que contenga esa entidad, sin pisar esos campos si `ui.context` algún día sí los trae.
     - **Pendiente real, no bug**: sigue sin verificación visual/de navegador (clic en nodo, animación por `step`, `ContrastPanel` abriéndose solo) — solo se confirmó que el adaptador no truena y produce el modelo correcto. Falta correr esto con un navegador de verdad en cuanto el entorno lo permita.
-- [ ] Ya hay tabla de resultados real: `backend/out/results_report.csv` (seeds 101-110, ver Fase 6 arriba) — falta integrarla al frontend (o dejarla como imagen estática, que el propio FRONTEND.md permite). Sin prueba física de wifi apagado ni de legibilidad en proyector.
+- [x] **La tabla de resultados (101-110) se queda fuera de la interfaz, a propósito** (2026-09-13) — ver `backend/src/report/results_chart.py` bajo la Fase 5 más arriba: genera la imagen estática (SVG + PNG) para la diapositiva del pitch, y `case_file.py` la embebe en su resumen ejecutivo. Sin prueba física de wifi apagado ni de legibilidad en proyector todavía.
+- [x] **10 seeds nuevos para la demo del frontend: 301 al 310** (2026-09-13) — `backend/out/estate_seed3XX.db` + `submission_seed3XX.json` (con bloque `ui` real de `cli.py`), copiados a `frontend/public/demo/` junto con su companion `.db` (para que el flujo de "soltar el `.db`" de `App.jsx` funcione con cualquiera de ellos, no solo con arrastrar el `.json`). **Estos NO son seeds de evaluación** — no se usan para tuning ni para el reporte oficial (esos son 1-10 y 101-110, ver Fase 6). Son solo para elegir cuál demo se ve mejor en vivo; se pueden regenerar o descartar libremente sin afectar ningún número reportado.
+  - Contenido de cada uno (findings por `scheme_type`, leads por `closed_by`) — ver la tabla completa que se le paso al equipo en el chat; en resumen: **301 y 305 son los más ricos** (5 y 3 hallazgos, 3 tipos de esquema distintos cada uno, con leads cerrados tanto por el investigador como por el retador). **302 y 310 son pobres para demo** (302: 0 hallazgos, 1 lead — sin lado "acusado" en el contraste; 310: 0 hallazgos, 0 leads — estate completamente limpio, el grafo solo tendria el nodo de la empresa). Los demas (303, 304, 306, 307, 308, 309) tienen entre 1 y 3 hallazgos de 1-2 tipos.
+  - Verificado: los 10 pasan `validate_format.py --estate`, y `adaptSubmission()` (Node) procesa los 10 sin tronar — confirma nodes/edges/highlight coherentes en cada uno (302 y 310 confirmados sin `highlight.accused`, como se espera).
 
 Historial completo en `git log --oneline` (rama `main`); cada commit
 describe qué paso o fix cubre, en español. El trabajo de Fase 7 vive en
@@ -492,6 +495,12 @@ una tabla con:
 
 Seeds de tuning: 1 al 10. Seeds de reporte: 101 al 110.
 Los de reporte NO se usan durante el desarrollo.
+
+*(Nota agregada 2026-09-13: además existen los seeds 301-310, generados
+para elegir cuál usar en la demo del frontend — ver Fase 7 arriba. NO
+son seeds de evaluación, no cuentan para tuning ni para el reporte, y
+se pueden regenerar o descartar sin afectar ningún número de esta
+sección.)*
 
 Este archivo SÍ puede leer truth.json. Es el único, junto con
 generate/.

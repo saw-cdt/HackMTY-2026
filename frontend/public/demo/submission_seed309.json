@@ -1,0 +1,205 @@
+{
+  "seed": 309,
+  "findings": [
+    {
+      "scheme_type": "kickback",
+      "entities": [
+        "RFC:NBH140111OF6",
+        "EMP:0009"
+      ],
+      "narrative": "Se detectó una transferencia de $30,067.60 de NBH140111OF6 a un empleado, lo cual sugiere un posible kickback. Esta transferencia se realizó después de que la empresa dejara de figurar en la lista 69-B, lo que apoya la sospecha de que se intentó ocultar la relación comercial.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 30067.6,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "NBH140111OF6",
+          "note": "Proveedor DISTRIBUIDORA PROFESIONAL SA, categoria Suministro de materiales."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "bank_txns",
+          "record_id": "BNK-00146",
+          "note": "Transferencia de NBH140111OF6 a EMP:0009 por $30,067.60."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00151",
+          "note": "Factura pagada por la empresa antes del reembolso al empleado."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "RFC:NBH140111OF6",
+          "to": "EMP:0009",
+          "amount": 30067.6,
+          "date": "2024-10-25",
+          "exhibit_id": "EX-02"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    },
+    {
+      "scheme_type": "phantom_vendor",
+      "entities": [
+        "RFC:ODZ170115SQ6"
+      ],
+      "narrative": "El proveedor no tiene contratos ni ordenes de compra, pero ha emitido facturas por un monto significativo. Esto sugiere la posibilidad de una simulacion de operaciones, que es prohibida por el Articulo 69-B.",
+      "rule_broken": "Articulo 69-B del Codigo Fiscal de la Federacion",
+      "peso_amount": 3275667.58,
+      "confidence": "proven",
+      "exhibits": [
+        {
+          "exhibit_id": "EX-01",
+          "source_table": "vendors",
+          "record_id": "ODZ170115SQ6",
+          "note": "Proveedor SOLUCIONES REGIOMONTANA SAPI DE CV, categoria Tecnologia de la informacion."
+        },
+        {
+          "exhibit_id": "EX-02",
+          "source_table": "efos_list",
+          "record_id": "ODZ170115SQ6",
+          "note": "Estatus definitivo en la lista 69-B, publicado 2025-09-12."
+        },
+        {
+          "exhibit_id": "EX-03",
+          "source_table": "invoices",
+          "record_id": "INV-00152",
+          "note": "Factura sin contrato ni orden de compra que la respalde, $702,889.78."
+        },
+        {
+          "exhibit_id": "EX-04",
+          "source_table": "invoices",
+          "record_id": "INV-00154",
+          "note": "Factura sin contrato ni orden de compra que la respalde, $1,295,451.64."
+        },
+        {
+          "exhibit_id": "EX-05",
+          "source_table": "invoices",
+          "record_id": "INV-00153",
+          "note": "Factura sin contrato ni orden de compra que la respalde, $1,277,326.16."
+        }
+      ],
+      "money_trail": [
+        {
+          "from": "EMPRESA",
+          "to": "RFC:ODZ170115SQ6",
+          "amount": 702889.78,
+          "date": "2024-06-02",
+          "exhibit_id": "EX-03"
+        }
+      ],
+      "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene."
+    }
+  ],
+  "leads_not_pursued": [
+    {
+      "entity": "RFC:AOH100304SS9",
+      "signal": "round_tripping_ciclo_a_empresa",
+      "reason": "El hecho verificado confirma que la factura correspondiente al último tramo de dinero fue emitida por quien recibió el dinero, lo cual explica el flujo de fondos.",
+      "tool_calls_made": [],
+      "closed_by": "challenger"
+    }
+  ],
+  "run_metadata": {
+    "llm_calls": 9,
+    "mxn_cost": 0.0,
+    "wall_clock_seconds": 62.367,
+    "deterministic": true
+  },
+  "ui": {
+    "company": {
+      "rfc": "CJA001216MP3",
+      "name": "Empresa investigada"
+    },
+    "nodes": [
+      {
+        "id": "RFC:NBH140111OF6",
+        "label": "DISTRIBUIDORA PROFESIONAL SA",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "RFC:ODZ170115SQ6",
+        "label": "SOLUCIONES REGIOMONTANA SAPI DE CV",
+        "type": "vendor",
+        "state": "accused",
+        "step": 3
+      },
+      {
+        "id": "EMP:0009",
+        "label": "ANA LOPEZ GONZALEZ",
+        "type": "employee",
+        "state": "accused",
+        "step": 6
+      },
+      {
+        "id": "RFC:AOH100304SS9",
+        "label": "CONSTRUCTORA MEXICANA SA",
+        "type": "vendor",
+        "state": "dismissed",
+        "step": 2
+      }
+    ],
+    "edges": [
+      {
+        "from": "RFC:NBH140111OF6",
+        "to": "EMP:0009",
+        "amount": 30067.6,
+        "date": "2024-10-25",
+        "exhibit_id": "EX-02",
+        "step": 6
+      },
+      {
+        "from": "CJA001216MP3",
+        "to": "RFC:ODZ170115SQ6",
+        "amount": 702889.78,
+        "date": "2024-06-02",
+        "exhibit_id": "EX-03",
+        "step": 6
+      }
+    ],
+    "highlight": {
+      "accused": "RFC:NBH140111OF6",
+      "dismissed": "RFC:AOH100304SS9"
+    },
+    "context": {
+      "RFC:AOH100304SS9": {
+        "signal": "round_tripping_ciclo_a_empresa",
+        "tool_calls_made": [],
+        "challenger_argument": "El hecho verificado confirma que la factura correspondiente al último tramo de dinero fue emitida por quien recibió el dinero, lo cual explica el flujo de fondos.",
+        "result": "cerrado por challenger"
+      },
+      "RFC:NBH140111OF6": {
+        "signal": "kickback_transferencia_a_empleado",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "trace_money",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      },
+      "RFC:ODZ170115SQ6": {
+        "signal": "phantom_vendor_efos_sin_contrato_ni_oc",
+        "tool_calls_made": [
+          "vendor",
+          "support_for",
+          "invoices_by(issuer)",
+          "invoices_by(receiver)",
+          "trace_money",
+          "reciprocity"
+        ],
+        "challenger_argument": "El retador no encontro ningun hecho pertinente a este flujo de dinero especifico que lo explique: el hallazgo se sostiene.",
+        "result": "ACUSACIÓN"
+      }
+    }
+  }
+}
