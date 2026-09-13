@@ -155,7 +155,6 @@ export default function GraphView({ model, step, onSelectNode, selectedId }) {
                     strokeDasharray: 1,
                     strokeDashoffset: visible ? 0 : 1,
                   }}
-                  markerEnd="url(#arrow)"
                 />
                 {amountText && (
                   <g
@@ -179,12 +178,6 @@ export default function GraphView({ model, step, onSelectNode, selectedId }) {
             )
           })}
 
-          <defs>
-            <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-              <path d="M0,0 L8,4 L0,8 z" fill="var(--border-strong)" />
-            </marker>
-          </defs>
-
           {nodes.map((node) => {
             const visible = node.step <= step
             const vState = visualState(node, step, maxStep)
@@ -194,18 +187,27 @@ export default function GraphView({ model, step, onSelectNode, selectedId }) {
             const labelAbove = node.y < (company?.y ?? 292)
             const isClimax = node.step >= maxStep && !isCompany
             const delay = staggerDelays.get(node.id) ?? 0
-
-            return (
-              <g
-                key={node.id}
-                className={`graph-node-group${isClimax ? ' is-climax' : ''}`}
-                style={{
+            // el climax no usa transition (una sola curva de entrada/
+            // salida): usa una animacion de keyframes real -- crece de
+            // mas y se asienta, mas marcado que solo alargar la
+            // duracion. Por eso NO se fija opacity/transform inline
+            // aqui: los controla la animacion (.is-climax en el CSS),
+            // para que no compitan con ella.
+            const groupStyle = isClimax
+              ? { transformOrigin: `${node.x}px ${node.y}px`, animationDelay: `${delay}ms`, cursor: visible ? 'pointer' : 'default' }
+              : {
                   opacity: visible ? 1 : 0,
                   transform: visible ? 'scale(1)' : 'scale(0)',
                   transformOrigin: `${node.x}px ${node.y}px`,
                   transitionDelay: visible ? `${delay}ms` : '0ms',
                   cursor: visible ? 'pointer' : 'default',
-                }}
+                }
+
+            return (
+              <g
+                key={node.id}
+                className={`graph-node-group${isClimax ? ' is-climax' : ''}${visible ? ' is-visible' : ''}`}
+                style={groupStyle}
                 onClick={() => visible && onSelectNode(node.id)}
               >
                 <circle
